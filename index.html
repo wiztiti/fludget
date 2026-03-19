@@ -214,14 +214,14 @@ input:focus,select:focus{border-color:rgba(100,180,220,.6);box-shadow:0 0 0 3px 
 <!-- ═══ CHARGES DU MOIS ═══ -->
 <div class="section" id="secCharges">
   <div class="sec-hd" onclick="toggleSec('Charges')">
-    <div class="sec-title">📋 Prélèvements</div>
+    <div class="sec-title">📋 Prélèvements du mois</div>
     <div style="display:flex;align-items:center;gap:8px">
       <div class="sec-badge badge-c" id="totCh">0 €</div>
       <span class="sec-chev">▾</span>
     </div>
   </div>
   <div class="sec-body">
-    <div id="listCh"><div class="empty">Aucune charge ce mois</div></div>
+    <div id="listCh"><div class="empty">Aucun prélèvement ce mois</div></div>
     <div class="reste-bar">
       <span>Prélevé :</span><span class="pv" id="chPaid">0 €</span>
       <span>Reste :</span><span class="v" id="chReste">0 €</span>
@@ -259,13 +259,13 @@ input:focus,select:focus{border-color:rgba(100,180,220,.6);box-shadow:0 0 0 3px 
   </div>
   <div class="sec-body">
     <div class="edit-tabs">
-      <div class="edit-tab active" id="tabMens" onclick="switchEditTab('mens')">Mensuelles</div>
-      <div class="edit-tab" id="tabAnn" onclick="switchEditTab('ann')">Annuelles</div>
+      <div class="edit-tab active" id="tabMens" onclick="switchEditTab('mens')">Mensuel</div>
+      <div class="edit-tab" id="tabAnn" onclick="switchEditTab('ann')">Annuel</div>
     </div>
 
-    <!-- Mensuelles -->
+    <!-- Mensuel -->
     <div id="viewMens">
-      <div id="listEditMens"><div class="empty">Aucune charge mensuelle</div></div>
+      <div id="listEditMens"><div class="empty">Aucun prélèvement mensuel</div></div>
       <div class="add-form" style="margin-top:4px">
         <div class="fg" style="flex:2"><label>Libellé</label><input type="text" id="mNom" placeholder="Loyer, EDF…"/></div>
         <div class="fg"><label>Montant €</label><input type="number" id="mMt" placeholder="0" min="0" step="0.01"/></div>
@@ -274,14 +274,14 @@ input:focus,select:focus{border-color:rgba(100,180,220,.6);box-shadow:0 0 0 3px 
       </div>
     </div>
 
-    <!-- Annuelles -->
+    <!-- Annuel -->
     <div id="viewAnn" style="display:none">
-      <div id="listEditAnn"><div class="empty">Aucune charge annuelle</div></div>
+      <div id="listEditAnn"><div class="empty">Aucun prélèvement annuel</div></div>
       <div style="padding:8px 14px 4px">
-        <button class="btn-add" style="width:100%" onclick="openAddCharge()">+ Nouvelle charge annuelle</button>
+        <button class="btn-add" style="width:100%" onclick="openAddCharge()">+ Nouveau prélèvement annuel</button>
       </div>
       <div style="padding:2px 14px 8px;font-size:.71rem;color:var(--muted)">
-        💡 Les charges annuelles apparaissent automatiquement dans "Charges du mois" aux mois concernés.
+        💡 Les prélèvements annuels apparaissent automatiquement dans "Prélèvements" aux mois concernés.
       </div>
     </div>
   </div>
@@ -292,7 +292,7 @@ input:focus,select:focus{border-color:rgba(100,180,220,.6);box-shadow:0 0 0 3px 
 <!-- ═══ MODAL : Ajouter / Éditer charge (mensuelle ou annuelle) ═══ -->
 <div class="overlay" id="modalCharge">
   <div class="modal">
-    <h3 id="mChargeTitle">➕ Nouvelle charge annuelle</h3>
+    <h3 id="mChargeTitle">➕ Nouveau prélèvement annuel</h3>
     <p class="sub">Définis les mois concernés, le montant pour chacun et le jour de prélèvement.</p>
     <input type="hidden" id="mChargeEditId"/>
     <div class="fg"><label>Libellé</label><input type="text" id="mChargeNom" placeholder="Place au port, Assurance…"/></div>
@@ -428,7 +428,7 @@ function renderChargesMois(){
   ].sort((a,b)=>(a.jour||99)-(b.jour||99));
 
   if(!all.length){
-    el.innerHTML='<div class="empty">Aucune charge ce mois</div>';
+    el.innerHTML='<div class="empty">Aucun prélèvement ce mois</div>';
     document.getElementById('totCh').textContent='0 €';
     document.getElementById('chPaid').textContent='0 €';
     document.getElementById('chReste').textContent='0 €';
@@ -457,11 +457,11 @@ function toggleCharge(id,type){
   else{const p=d.ponctuelles.find(x=>x.id===id);if(p){p.checked=!p.checked;saveCD(d);render();}}
 }
 
-// ══ Edit : Mensuelles ══
+// ══ Edit : Mensuel ══
 function renderEditMens(){
   const d=CD(); const el=document.getElementById('listEditMens');
   const sorted=[...d.charges].sort((a,b)=>(a.jour||99)-(b.jour||99));
-  if(!sorted.length){el.innerHTML='<div class="empty">Aucune charge mensuelle</div>';updateEditBadge();return;}
+  if(!sorted.length){el.innerHTML='<div class="empty">Aucun prélèvement mensuel</div>';updateEditBadge();return;}
   el.innerHTML=sorted.map(c=>`
     <div class="edit-row">
       <div class="edit-row-info">
@@ -507,10 +507,10 @@ function saveMensuelle(){
 
 function delMens(id){const d=CD();d.charges=d.charges.filter(c=>c.id!==id);saveCD(d);render();}
 
-// ══ Edit : Annuelles ══
+// ══ Edit : Annuel ══
 function renderEditAnn(){
   const anns=getAnn(); const el=document.getElementById('listEditAnn');
-  if(!anns.length){el.innerHTML='<div class="empty">Aucune charge annuelle</div>';updateEditBadge();return;}
+  if(!anns.length){el.innerHTML='<div class="empty">Aucun prélèvement annuel</div>';updateEditBadge();return;}
   el.innerHTML=anns.map(a=>{
     const total=(a.mois||[]).map(Number).reduce((s,m)=>{
       const k=String(m); return s+(a.exceptions&&a.exceptions[k]!=null?Number(a.exceptions[k]):Number(a.montant));
@@ -593,7 +593,7 @@ let modalMonthsData=[];
 function openAddCharge(){
   modalMonthsData=Array.from({length:12},()=>({active:false,montant:''}));
   document.getElementById('mChargeEditId').value='';
-  document.getElementById('mChargeTitle').textContent='➕ Nouvelle charge annuelle';
+  document.getElementById('mChargeTitle').textContent='➕ Nouveau prélèvement annuel';
   document.getElementById('mChargeNom').value='';
   document.getElementById('mChargeJour').value='';
   document.getElementById('mChargeMtDef').value='';
