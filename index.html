@@ -207,7 +207,7 @@ input:focus,select:focus{border-color:rgba(100,180,220,.6);box-shadow:0 0 0 3px 
 
 <!-- Notif -->
 <div class="notif" id="notif">
-  <strong>⏰ Échéances dans les 5 prochains jours :</strong>
+  <strong>⏰ Prélèvements prévus demain :</strong>
   <ul id="notifList"></ul>
 </div>
 
@@ -807,13 +807,12 @@ function checkNotifs(){
   if(!isCur){banner.classList.remove('on');return;}
   const today=now.getDate();
   const up=[...d.charges,...d.ponctuelles]
-    .filter(x=>!x.checked&&x.jour&&x.jour-today>=0&&x.jour-today<=5)
-    .map(x=>({...x,diff:x.jour-today})).sort((a,b)=>a.jour-b.jour);
+    .filter(x=>!x.checked&&x.jour&&x.jour-today===1)
+    .sort((a,b)=>a.jour-b.jour);
   if(up.length){
-    document.getElementById('notifList').innerHTML=up.map(u=>{
-      const l=u.diff===0?"aujourd'hui":u.diff===1?'demain':`dans ${u.diff} jours`;
-      return`<li><strong>${esc(u.nom)}</strong> — ${fmt(u.montant)} — ${l} (le ${u.jour})</li>`;
-    }).join('');
+    document.getElementById('notifList').innerHTML=up.map(u=>
+      `<li><strong>${esc(u.nom)}</strong> — ${fmt(u.montant)}</li>`
+    ).join('');
     banner.classList.add('on');
   } else banner.classList.remove('on');
 }
