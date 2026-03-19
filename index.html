@@ -43,9 +43,10 @@ header{background:rgba(255,255,255,0.6);backdrop-filter:blur(12px);border-bottom
 /* ── Notif ── */
 .notif{margin:10px 16px 0;background:linear-gradient(135deg,rgba(244,162,97,.15),rgba(240,128,128,.12));border:1px solid rgba(244,162,97,.35);border-radius:var(--rs);padding:10px 14px;font-size:.8rem;color:#9a5a2a;display:none;}
 .notif.on{display:block;}
-.notif strong{display:block;margin-bottom:4px;font-weight:700;}
-.notif ul{padding-left:16px;}
-.notif li{margin:2px 0;}
+.notif strong{font-weight:700;margin-right:4px;}
+.notif ul{padding-left:0;list-style:none;}
+.notif li{margin:0;display:inline;}
+.notif li+li::before{content:' · ';font-weight:700;}
 
 /* ── Section ── */
 .section{margin:14px 16px 0;background:var(--card);backdrop-filter:blur(10px);border:1px solid var(--card-border);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;}
