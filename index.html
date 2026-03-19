@@ -66,8 +66,8 @@ header{background:rgba(255,255,255,0.6);backdrop-filter:blur(12px);border-bottom
 .charge-row:last-of-type{border-bottom:none;}
 .charge-row:hover{background:rgba(255,255,255,.5);}
 .charge-row.done{background:var(--ckbg);}
-.charge-row.done .cr-name{text-decoration:line-through;color:var(--muted);}
-.charge-row.done .cr-amount{color:var(--muted);}
+.charge-row.done .cr-name{text-decoration:line-through;text-decoration-thickness:2px;color:var(--muted);font-style:italic;}
+.charge-row.done .cr-amount{color:var(--muted);text-decoration:line-through;text-decoration-thickness:2px;font-style:italic;}
 .cr-info{flex:1;min-width:0;}
 .cr-name{font-size:.87rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cr-meta{font-size:.7rem;color:var(--muted);margin-top:1px;}
@@ -221,11 +221,12 @@ input:focus,select:focus{border-color:rgba(100,180,220,.6);box-shadow:0 0 0 3px 
     </div>
   </div>
   <div class="sec-body">
-    <div id="listCh"><div class="empty">Aucun prélèvement ce mois</div></div>
-    <div class="reste-bar">
+    <div class="reste-bar" style="margin-top:8px">
       <span>Prélevé :</span><span class="pv" id="chPaid">0 €</span>
       <span>Reste :</span><span class="v" id="chReste">0 €</span>
     </div>
+    <div style="padding:4px 14px 2px;font-size:.71rem;color:var(--muted);text-align:center">👆 Appuie sur un prélèvement pour le marquer comme passé</div>
+    <div id="listCh"><div class="empty">Aucun prélèvement ce mois</div></div>
   </div>
 </div>
 
