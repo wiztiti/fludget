@@ -240,7 +240,7 @@ input:focus,select:focus{border-color:rgba(100,180,220,.6);box-shadow:0 0 0 3px 
       <span>Prélevé :</span><span class="pv" id="chPaid">0 €</span>
       <span>Reste :</span><span class="v" id="chReste">0 €</span>
     </div>
-    <div style="padding:4px 14px 2px;font-size:.71rem;color:var(--muted);text-align:center">👆 Appuie sur un prélèvement pour le marquer comme passé</div>
+    <div style="padding:4px 14px 2px;font-size:.71rem;color:var(--muted);text-align:center">👆 Appuie pour marquer comme passé · Appui long pour modifier</div>
     <div id="listCh"><div class="empty">Aucun prélèvement ce mois</div></div>
   </div>
 </div>
@@ -315,7 +315,7 @@ input:focus,select:focus{border-color:rgba(100,180,220,.6);box-shadow:0 0 0 3px 
       <span class="info-icon">📋</span>
       <div class="info-text">
         <strong>Prélèvements du mois</strong><br>
-        Retrouvez ici tous vos prélèvements à venir. Appuyez sur une ligne le jour où le prélèvement a eu lieu pour le marquer comme passé — la somme est alors automatiquement déduite du total restant.
+        Retrouvez ici tous vos prélèvements à venir. Appuyez sur une ligne pour la marquer comme passée — la somme est alors automatiquement déduite du total restant. Un appui long sur une ligne permet de modifier rapidement son libellé, son montant ou son jour de prélèvement pour ce mois uniquement.
       </div>
     </div>
 
@@ -397,6 +397,25 @@ input:focus,select:focus{border-color:rgba(100,180,220,.6);box-shadow:0 0 0 3px 
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('modalMens')">Annuler</button>
       <button class="btn-add" onclick="saveMensuelle()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL : Édition rapide depuis prélèvements du mois ═══ -->
+<div class="overlay" id="modalQuickEdit">
+  <div class="modal">
+    <h3 id="mqTitle">✏️ Modifier le prélèvement</h3>
+    <p class="sub">Modification pour ce mois uniquement.</p>
+    <input type="hidden" id="mqId"/>
+    <input type="hidden" id="mqType"/>
+    <div class="fg"><label>Libellé</label><input type="text" id="mqNom" placeholder="Libellé…"/></div>
+    <div style="display:flex;gap:8px">
+      <div class="fg"><label>Montant €</label><input type="number" id="mqMt" placeholder="0" min="0" step="0.01"/></div>
+      <div class="fg" style="max-width:100px"><label>Jour prélèv.</label><input type="number" id="mqJour" placeholder="1-31" min="1" max="31"/></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('modalQuickEdit')">Annuler</button>
+      <button class="btn-add" onclick="saveQuickEdit()">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -508,24 +527,78 @@ function renderChargesMois(){
   let total=0,paid=0;
   el.innerHTML=all.map(c=>{
     total+=c.montant; if(c.checked) paid+=c.montant;
-    return`<div class="charge-row ${c.checked?'done':''}" onclick="toggleCharge('${c.id}','${c.type}')">
+    return`<div class="charge-row ${c.checked?'done':''}"
+      onclick="toggleCharge('${c.id}','${c.type}')"
+      oncontextmenu="event.preventDefault();openQuickEdit('${c.id}','${c.type}')"
+      data-id="${c.id}" data-type="${c.type}">
       <div class="cr-info">
         <div class="cr-name">${esc(c.nom)}</div>
         ${c.jour?`<div class="cr-meta">Prélèvement le ${c.jour}</div>`:''}
       </div>
-      ${c.type==='ann'?'<div class="cr-annual-dot" title="Charge annuelle"></div>':''}
+      ${c.type==='ann'?'<div class="cr-annual-dot" title="Prélèvement annuel"></div>':''}
       <div class="cr-amount">${fmt(c.montant)}</div>
     </div>`;
   }).join('');
+  // Long press detection
+  setupLongPress();
   document.getElementById('totCh').textContent=fmt(total);
   document.getElementById('chPaid').textContent=fmt(paid);
   document.getElementById('chReste').textContent=fmt(total-paid);
 }
 
 function toggleCharge(id,type){
+  if(longPressTriggered) return; // ignore tap if long press just fired
   const d=CD();
   if(type==='mens'){const c=d.charges.find(x=>x.id===id);if(c){c.checked=!c.checked;saveCD(d);render();}}
   else{const p=d.ponctuelles.find(x=>x.id===id);if(p){p.checked=!p.checked;saveCD(d);render();}}
+}
+
+// ── Long press ──
+let lpTimer=null, longPressTriggered=false;
+function setupLongPress(){
+  document.querySelectorAll('.charge-row').forEach(row=>{
+    row.addEventListener('touchstart',e=>{
+      longPressTriggered=false;
+      lpTimer=setTimeout(()=>{
+        longPressTriggered=true;
+        openQuickEdit(row.dataset.id, row.dataset.type);
+      },500);
+    },{passive:true});
+    row.addEventListener('touchend',()=>clearTimeout(lpTimer));
+    row.addEventListener('touchmove',()=>clearTimeout(lpTimer));
+  });
+}
+
+function openQuickEdit(id, type){
+  const d=CD();
+  let item;
+  if(type==='mens') item=d.charges.find(x=>x.id===id);
+  else item=d.ponctuelles.find(x=>x.id===id);
+  if(!item) return;
+  document.getElementById('mqId').value=id;
+  document.getElementById('mqType').value=type;
+  document.getElementById('mqNom').value=item.nom;
+  document.getElementById('mqMt').value=item.montant;
+  document.getElementById('mqJour').value=item.jour||'';
+  document.getElementById('modalQuickEdit').classList.add('open');
+}
+
+function saveQuickEdit(){
+  const id=document.getElementById('mqId').value;
+  const type=document.getElementById('mqType').value;
+  const nom=document.getElementById('mqNom').value.trim();
+  const mt=parseFloat(document.getElementById('mqMt').value);
+  const jour=parseInt(document.getElementById('mqJour').value)||null;
+  if(!nom||isNaN(mt)||mt<=0){toast('Remplis le libellé et le montant');return;}
+  const d=CD();
+  if(type==='mens'){
+    const c=d.charges.find(x=>x.id===id);
+    if(c){c.nom=nom;c.montant=mt;c.jour=jour;}
+  } else {
+    const p=d.ponctuelles.find(x=>x.id===id);
+    if(p){p.nom=nom;p.montant=mt;p.jour=jour;}
+  }
+  saveCD(d); closeModal('modalQuickEdit'); render(); toast('Prélèvement modifié ✓');
 }
 
 // ══ Edit : Mensuel ══
