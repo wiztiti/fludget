@@ -1,0 +1,19 @@
+{
+  "name": "Fludget",
+  "short_name": "Fludget",
+  "description": "Votre budget mensuel et annuel, simplement.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a3a5c",
+  "theme_color": "#1a3a5c",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%231a3a5c'/%3E%3Cstop offset='100%25' style='stop-color:%231a5c4a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='112' fill='url(%23bg)'/%3E%3Cpath d='M 100 340 Q 180 200 256 220 Q 332 240 412 160' fill='none' stroke='%23c8eef8' stroke-width='22' stroke-linecap='round' opacity='0.85'/%3E%3Ccircle cx='412' cy='160' r='16' fill='%23c8eef8' opacity='0.95'/%3E%3Ctext x='118' y='330' font-family='Georgia,serif' font-size='230' font-weight='700' fill='white'%3EF%3C/text%3E%3Ctext x='272' y='330' font-family='Georgia,serif' font-size='230' font-weight='700' fill='%23a8e6cf'%3EL%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
