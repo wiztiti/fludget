@@ -175,11 +175,25 @@ input:focus,select:focus{border-color:rgba(100,180,220,.6);box-shadow:0 0 0 3px 
 @media(max-width:480px){
   .balance-bar{display:flex;flex-direction:row;justify-content:space-around;}
 }
+
+/* ── Info modal ── */
+.btn-info{background:none;border:none;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;color:var(--muted);transition:background .15s,color .15s;flex-shrink:0;}
+.btn-info:hover{background:rgba(100,180,220,.12);color:#3a86c8;}
+.info-modal{background:linear-gradient(145deg,#f9fcff,#f2faf5);border-radius:20px;padding:26px 24px;width:100%;max-width:440px;box-shadow:0 16px 48px rgba(60,100,140,.18);max-height:90vh;overflow-y:auto;}
+.info-modal h2{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--text);margin-bottom:2px;}
+.info-modal .app-name{font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:18px;}
+.info-modal .info-block{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start;}
+.info-modal .info-icon{font-size:1.1rem;flex-shrink:0;margin-top:1px;}
+.info-modal .info-text{font-size:.84rem;line-height:1.55;color:var(--text);}
+.info-modal .info-text strong{font-weight:700;color:#2a6049;}
+.info-modal .info-divider{border:none;border-top:1px solid rgba(150,200,230,.2);margin:16px 0;}
+.info-modal .info-footer{font-size:.78rem;color:var(--muted);text-align:center;line-height:1.5;}
 </style>
 </head>
 <body>
 
 <header>
+  <button class="btn-info" onclick="openInfo()" title="À propos de Fludget">ℹ️</button>
   <div class="month-nav">
     <button onclick="changeMonth(-1)">‹</button>
     <span id="curLabel"></span>
@@ -290,6 +304,61 @@ input:focus,select:focus{border-color:rgba(100,180,220,.6);box-shadow:0 0 0 3px 
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- ═══ MODAL : Info ═══ -->
+<div class="overlay" id="modalInfo">
+  <div class="info-modal">
+    <h2>Guide d'utilisation</h2>
+    <div class="app-name">Fludget</div>
+
+    <div class="info-block">
+      <span class="info-icon">📋</span>
+      <div class="info-text">
+        <strong>Prélèvements du mois</strong><br>
+        Retrouvez ici tous vos prélèvements à venir. Appuyez sur une ligne le jour où le prélèvement a eu lieu pour le marquer comme passé — la somme est alors automatiquement déduite du total restant.
+      </div>
+    </div>
+
+    <div class="info-block">
+      <span class="info-icon">💵</span>
+      <div class="info-text">
+        <strong>Revenus</strong><br>
+        Renseignez vos revenus mensuels (salaire, aides, autres entrées) pour obtenir un solde précis et une visualisation claire de votre budget.
+      </div>
+    </div>
+
+    <div class="info-block">
+      <span class="info-icon">⚙️</span>
+      <div class="info-text">
+        <strong>Créer / Modifier les prélèvements</strong><br>
+        Gérez vos prélèvements mensuels et annuels. Les prélèvements annuels peuvent couvrir certains mois seulement, avec un montant différent chaque mois si besoin — par exemple 135,00 € le 5 mai et 140,00 € le 5 octobre. Ils apparaissent automatiquement dans "Prélèvements du mois" aux mois concernés.
+      </div>
+    </div>
+
+    <div class="info-block">
+      <span class="info-icon">🗓</span>
+      <div class="info-text">
+        <strong>Navigation et duplication</strong><br>
+        Les flèches du bandeau supérieur permettent de naviguer entre les mois passés et à venir. Le bouton <em>Dupliquer</em> copie l'ensemble des prélèvements du mois en cours vers un mois de votre choix, avec les cases remises à zéro.
+      </div>
+    </div>
+
+    <div class="info-block">
+      <span class="info-icon">🥧</span>
+      <div class="info-text">
+        <strong>Tableau de bord</strong><br>
+        Sous le bandeau, le graphique circulaire représente en un coup d'œil la part de vos charges par rapport à vos revenus, accompagné des totaux du mois.
+      </div>
+    </div>
+
+    <hr class="info-divider"/>
+    <div class="info-footer">Fludget — votre budget, simplement.<br>© 2026 Frédéric Lepreux — Tous droits réservés.</div>
+
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="btn-add" style="width:100%" onclick="closeModal('modalInfo')">Compris ✓</button>
+    </div>
+  </div>
+</div>
 
 <!-- ═══ MODAL : Ajouter / Éditer charge (mensuelle ou annuelle) ═══ -->
 <div class="overlay" id="modalCharge">
@@ -794,10 +863,10 @@ function updateBalance(){
              +d.ponctuelles.filter(p=>!p.checked).reduce((s,p)=>s+p.montant,0);
   const solde=tR-tAll;
   drawPie(tR,tAll);
-  document.getElementById('balR').textContent=fmt(tR);
-  document.getElementById('balC').textContent=fmt(tAll);
-  document.getElementById('balReste').textContent=`reste ${fmt(reste)}`;
-  const el=document.getElementById('balS'); el.textContent=fmt(solde); el.classList.toggle('neg',solde<0);
+  document.getElementById('balR').textContent=fmtNoEur(tR);
+  document.getElementById('balC').textContent=fmtNoEur(tAll);
+  document.getElementById('balReste').textContent=`reste ${fmtNoEur(reste)}`;
+  const el=document.getElementById('balS'); el.textContent=fmtNoEur(solde); el.classList.toggle('neg',solde<0);
 }
 
 // ══ Notifications ══
@@ -853,6 +922,7 @@ function confirmDup(){
 function toggleSec(n){document.getElementById(`sec${n}`).classList.toggle('collapsed');}
 function uid(){return Math.random().toString(36).slice(2,10);}
 function fmt(n){return Number(n).toFixed(2).replace('.',',')+' €';}
+function fmtNoEur(n){return Number(n).toFixed(2).replace('.',',');}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 
@@ -866,6 +936,8 @@ document.addEventListener('keydown',e=>{
   if(['revNom','revMt'].includes(t)) addRev();
   else if(['mNom','mMt','mJour'].includes(t)) addMensuelle();
 });
+
+function openInfo(){ document.getElementById('modalInfo').classList.add('open'); }
 
 init();
 </script>
