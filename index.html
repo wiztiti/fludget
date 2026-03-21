@@ -29,7 +29,7 @@
   --text:#2d3a4a; --muted:#7a93a8; --ckbg:rgba(200,230,215,0.35); --danger:#e07070;
   --r:16px; --rs:10px;
 }
-*{box-sizing:border-box;margin:0;padding:0;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;user-select:none;}
 body{font-family:'Nunito',sans-serif;background:linear-gradient(145deg,var(--bg-from) 0%,#f5f0fa 50%,var(--bg-to) 100%);min-height:100vh;color:var(--text);padding-bottom:60px;}
 
 /* ── Header ── */
@@ -81,8 +81,8 @@ header{background:rgba(255,255,255,0.6);backdrop-filter:blur(12px);border-bottom
 .charge-row:last-of-type{border-bottom:none;}
 .charge-row:hover{background:rgba(255,255,255,.5);}
 .charge-row.done{background:var(--ckbg);}
-.charge-row.done .cr-name{text-decoration:line-through;text-decoration-thickness:2px;color:var(--muted);font-style:italic;}
-.charge-row.done .cr-amount{color:var(--muted);text-decoration:line-through;text-decoration-thickness:2px;font-style:italic;}
+.charge-row.done .cr-name{text-decoration:line-through;text-decoration-thickness:1.5px;color:var(--muted);font-style:italic;}
+.charge-row.done .cr-amount{color:var(--muted);text-decoration:line-through;text-decoration-thickness:1.5px;font-style:italic;}
 .cr-info{flex:1;min-width:0;}
 .cr-name{font-size:.87rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cr-meta{font-size:.7rem;color:var(--muted);margin-top:1px;}
@@ -95,8 +95,12 @@ header{background:rgba(255,255,255,0.6);backdrop-filter:blur(12px);border-bottom
 .reste-bar .pv{font-weight:700;color:var(--green);}
 
 /* ── Revenus ── */
-.rev-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid rgba(0,0,0,.04);}
+.rev-row{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid rgba(0,0,0,.04);cursor:pointer;transition:background .15s;}
 .rev-row:last-of-type{border-bottom:none;}
+.rev-row:hover{background:rgba(255,255,255,.5);}
+.rev-row.done{background:var(--ckbg);}
+.rev-row.done .rev-name{text-decoration:line-through;text-decoration-thickness:1.5px;color:var(--muted);font-style:italic;}
+.rev-row.done .rev-amount{text-decoration:line-through;text-decoration-thickness:1.5px;color:var(--muted);font-style:italic;}
 .rev-name{flex:1;font-size:.87rem;font-weight:600;}
 .rev-amount{font-size:.9rem;font-weight:700;color:var(--green);}
 
@@ -148,7 +152,7 @@ header{background:rgba(255,255,255,0.6);backdrop-filter:blur(12px);border-bottom
 .add-form{padding:10px 14px 4px;border-top:1px dashed rgba(100,160,200,.2);display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;}
 .fg{display:flex;flex-direction:column;gap:3px;flex:1;min-width:88px;}
 .fg label{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
-input[type=text],input[type=number],select{background:rgba(255,255,255,.8);border:1.5px solid rgba(150,200,230,.3);border-radius:var(--rs);padding:7px 10px;font-family:'Nunito',sans-serif;font-size:.85rem;color:var(--text);outline:none;transition:border-color .15s,box-shadow .15s;width:100%;}
+input[type=text],input[type=number],select{-webkit-user-select:text;user-select:text;background:rgba(255,255,255,.8);border:1.5px solid rgba(150,200,230,.3);border-radius:var(--rs);padding:7px 10px;font-family:'Nunito',sans-serif;font-size:.85rem;color:var(--text);outline:none;transition:border-color .15s,box-shadow .15s;width:100%;}
 input:focus,select:focus{border-color:rgba(100,180,220,.6);box-shadow:0 0 0 3px rgba(100,180,220,.12);}
 .btn-add{background:linear-gradient(135deg,var(--bf),var(--bt));border:none;border-radius:var(--rs);padding:8px 18px;font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:700;color:var(--btext);cursor:pointer;box-shadow:var(--bsh);transition:transform .15s;white-space:nowrap;align-self:flex-end;}
 .btn-add:hover{transform:translateY(-1px);box-shadow:var(--shadow-h);}
@@ -189,6 +193,16 @@ input:focus,select:focus{border-color:rgba(100,180,220,.6);box-shadow:0 0 0 3px 
 @media(max-width:480px){
   .balance-bar{display:flex;flex-direction:row;justify-content:space-around;}
 }
+
+/* ── Quick edit buttons ── */
+.mq-btn { border:none; border-radius:var(--rs); padding:9px 16px; font-family:'Nunito',sans-serif; font-size:.85rem; font-weight:700; cursor:pointer; transition:transform .12s, box-shadow .12s; }
+.mq-btn:hover { transform:translateY(-1px); }
+.mq-btn-cancel { background:rgba(150,180,200,.15); border:1.5px solid rgba(150,180,200,.3); color:var(--muted); }
+.mq-btn-cancel:hover { background:rgba(150,180,200,.25); }
+.mq-btn-delete { background:linear-gradient(135deg,#f4a0a0,#e87070); color:white; box-shadow:0 2px 10px rgba(240,100,100,.25); }
+.mq-btn-delete:hover { box-shadow:0 4px 14px rgba(240,100,100,.35); }
+.mq-btn-save { background:linear-gradient(135deg,var(--bf),var(--bt)); color:var(--btext); box-shadow:var(--bsh); }
+.mq-btn-save:hover { box-shadow:var(--shadow-h); }
 
 /* ── Info modal ── */
 .btn-info{background:none;border:none;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;color:var(--muted);transition:background .15s,color .15s;flex-shrink:0;}
@@ -265,12 +279,14 @@ input:focus,select:focus{border-color:rgba(100,180,220,.6);box-shadow:0 0 0 3px 
     <div class="sec-title">💵 Revenus</div>
     <div style="display:flex;align-items:center;gap:8px">
       <div class="sec-badge badge-r" id="totRev">0 €</div>
+      <button onclick="event.stopPropagation();toggleRevForm()" id="btnRevForm" style="background:linear-gradient(135deg,var(--bf),var(--bt));border:none;border-radius:50%;width:26px;height:26px;font-size:1rem;color:var(--btext);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--bsh);font-weight:700;line-height:1">+</button>
       <span class="sec-chev">▾</span>
     </div>
   </div>
   <div class="sec-body">
     <div id="listRev"><div class="empty">Aucun revenu saisi</div></div>
-    <div class="add-form">
+    <div style="padding:4px 14px 2px;font-size:.71rem;color:var(--muted);text-align:center" id="revHint" style="display:none">👆 Appuie pour encaisser · Appui long pour modifier</div>
+    <div class="add-form" id="revForm" style="display:none">
       <div class="fg" style="flex:2"><label>Libellé</label><input type="text" id="revNom" placeholder="Salaire, CAF…"/></div>
       <div class="fg"><label>Montant €</label><input type="number" id="revMt" placeholder="0" min="0" step="0.01"/></div>
       <button class="btn-add" onclick="addRev()">+ Ajouter</button>
@@ -337,7 +353,7 @@ input:focus,select:focus{border-color:rgba(100,180,220,.6);box-shadow:0 0 0 3px 
       <span class="info-icon">💵</span>
       <div class="info-text">
         <strong>Revenus</strong><br>
-        Renseignez vos revenus mensuels (salaire, aides, autres entrées) pour obtenir un solde précis et une visualisation claire de votre budget.
+        Renseignez vos revenus mensuels (salaire, aides, autres entrées) pour obtenir un solde précis et une visualisation claire de votre budget. Un appui long sur un revenu permet de le modifier ou de le supprimer.
       </div>
     </div>
 
@@ -430,14 +446,37 @@ input:focus,select:focus{border-color:rgba(100,180,220,.6);box-shadow:0 0 0 3px 
     <div id="mqConfirmDel" style="display:none;margin-top:12px;padding:10px 12px;background:rgba(240,128,128,0.1);border:1px solid rgba(240,128,128,0.3);border-radius:var(--rs);font-size:.82rem;color:#c0392b;">
       Confirmer la suppression de ce prélèvement ?
       <div style="display:flex;gap:8px;margin-top:8px">
-        <button class="btn-cancel" style="flex:1" onclick="document.getElementById('mqConfirmDel').style.display='none'">Non</button>
-        <button class="btn-add" style="flex:1;background:linear-gradient(135deg,#f08080,#e07070)" onclick="confirmQuickDelete()">Oui, supprimer</button>
+        <button class="mq-btn mq-btn-cancel" onclick="document.getElementById('mqConfirmDel').style.display='none'">Non</button>
+        <button class="mq-btn mq-btn-delete" onclick="confirmQuickDelete()">Oui, supprimer</button>
       </div>
     </div>
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeModal('modalQuickEdit')">Annuler</button>
-      <button style="background:none;border:none;color:rgba(200,100,100,0.6);font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:700;cursor:pointer;padding:8px 12px;border-radius:var(--rs);transition:all .15s" onmouseover="this.style.background='rgba(240,128,128,0.1)'" onmouseout="this.style.background='none'" onclick="document.getElementById('mqConfirmDel').style.display='block'">🗑 Supprimer</button>
-      <button class="btn-add" onclick="saveQuickEdit()">Enregistrer</button>
+    <div class="modal-actions" style="justify-content:space-between">
+      <button class="mq-btn mq-btn-cancel" onclick="closeModal('modalQuickEdit')">Annuler</button>
+      <button class="mq-btn mq-btn-delete" onclick="document.getElementById('mqConfirmDel').style.display='block'">Supprimer</button>
+      <button class="mq-btn mq-btn-save" onclick="saveQuickEdit()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL : Édition rapide revenu ═══ -->
+<div class="overlay" id="modalRevEdit">
+  <div class="modal">
+    <h3>✏️ Modifier le revenu</h3>
+    <p class="sub">Modification pour ce mois uniquement.</p>
+    <input type="hidden" id="mrId"/>
+    <div class="fg"><label>Libellé</label><input type="text" id="mrNom" placeholder="Salaire…"/></div>
+    <div class="fg"><label>Montant €</label><input type="number" id="mrMt" placeholder="0" min="0" step="0.01"/></div>
+    <div id="mrConfirmDel" style="display:none;margin-top:12px;padding:10px 12px;background:rgba(240,128,128,0.1);border:1px solid rgba(240,128,128,0.3);border-radius:var(--rs);font-size:.82rem;color:#c0392b;">
+      Confirmer la suppression de ce revenu ?
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="mq-btn mq-btn-cancel" onclick="document.getElementById('mrConfirmDel').style.display='none'">Non</button>
+        <button class="mq-btn mq-btn-delete" onclick="confirmRevDelete()">Oui, supprimer</button>
+      </div>
+    </div>
+    <div class="modal-actions" style="justify-content:space-between">
+      <button class="mq-btn mq-btn-cancel" onclick="closeModal('modalRevEdit')">Annuler</button>
+      <button class="mq-btn mq-btn-delete" onclick="document.getElementById('mrConfirmDel').style.display='block'">Supprimer</button>
+      <button class="mq-btn mq-btn-save" onclick="saveRevEdit()">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -513,22 +552,77 @@ function renderRev(){
   if(!d.revenus.length){el.innerHTML='<div class="empty">Aucun revenu saisi</div>';document.getElementById('totRev').textContent='0 €';return;}
   let t=0;
   el.innerHTML=d.revenus.map(r=>{t+=r.montant;return`
-    <div class="rev-row">
+    <div class="rev-row ${r.checked?'done':''}" data-rev-id="${r.id}" onclick="toggleRev('${r.id}')">
       <div class="rev-name">${esc(r.nom)}</div>
       <div class="rev-amount">${fmt(r.montant)}</div>
-      <button class="btn-del" onclick="delRev('${r.id}')">✕</button>
     </div>`;}).join('');
   document.getElementById('totRev').textContent=fmt(t);
+  setupRevLongPress();
 }
+function toggleRevForm(){
+  const f=document.getElementById('revForm');
+  const open=f.style.display==='none';
+  f.style.display=open?'':'none';
+  document.getElementById('btnRevForm').textContent=open?'−':'+';
+  if(open) document.getElementById('revNom').focus();
+}
+
 function addRev(){
   const nom=document.getElementById('revNom').value.trim();
   const mt=parseFloat(document.getElementById('revMt').value);
   if(!nom||isNaN(mt)||mt<=0){toast('Remplis le libellé et le montant');return;}
   const d=CD(); d.revenus.push({id:uid(),nom,montant:mt}); saveCD(d); render();
   document.getElementById('revNom').value=''; document.getElementById('revMt').value='';
+  document.getElementById('revForm').style.display='none';
+  document.getElementById('btnRevForm').textContent='+';
   toast('Revenu ajouté ✓');
 }
 function delRev(id){const d=CD();d.revenus=d.revenus.filter(r=>r.id!==id);saveCD(d);render();}
+function toggleRev(id){
+  if(revLpTriggered) return;
+  const d=CD(); const r=d.revenus.find(x=>x.id===id);
+  if(r){r.checked=!r.checked;saveCD(d);render();}
+}
+
+// ── Long press revenus ──
+let revLpTimer=null, revLpTriggered=false;
+function setupRevLongPress(){
+  document.querySelectorAll('.rev-row').forEach(row=>{
+    row.addEventListener('touchstart',e=>{
+      revLpTriggered=false;
+      revLpTimer=setTimeout(()=>{
+        revLpTriggered=true;
+        openRevEdit(row.dataset.revId);
+      },500);
+    },{passive:true});
+    row.addEventListener('touchend',()=>clearTimeout(revLpTimer));
+    row.addEventListener('touchmove',()=>clearTimeout(revLpTimer));
+    row.addEventListener('contextmenu',e=>{e.preventDefault();openRevEdit(row.dataset.revId);});
+  });
+}
+
+function openRevEdit(id){
+  const d=CD(); const r=d.revenus.find(x=>x.id===id); if(!r) return;
+  document.getElementById('mrId').value=id;
+  document.getElementById('mrNom').value=r.nom;
+  document.getElementById('mrMt').value=r.montant;
+  document.getElementById('mrConfirmDel').style.display='none';
+  document.getElementById('modalRevEdit').classList.add('open');
+}
+function saveRevEdit(){
+  const id=document.getElementById('mrId').value;
+  const nom=document.getElementById('mrNom').value.trim();
+  const mt=parseFloat(document.getElementById('mrMt').value);
+  if(!nom||isNaN(mt)||mt<=0){toast('Remplis le libellé et le montant');return;}
+  const d=CD(); const r=d.revenus.find(x=>x.id===id);
+  if(r){r.nom=nom;r.montant=mt;}
+  saveCD(d); closeModal('modalRevEdit'); render(); toast('Revenu modifié ✓');
+}
+function confirmRevDelete(){
+  const id=document.getElementById('mrId').value;
+  const d=CD(); d.revenus=d.revenus.filter(x=>x.id!==id);
+  saveCD(d); closeModal('modalRevEdit'); render(); toast('Revenu supprimé');
+}
 
 // ══ Charges du mois (tap to toggle) ══
 function renderChargesMois(){
