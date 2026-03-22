@@ -713,7 +713,23 @@ function saveQuickEdit(){
     if(c){c.nom=nom;c.montant=mt;c.jour=jour;}
   } else {
     const p=d.ponctuelles.find(x=>x.id===id);
-    if(p){p.nom=nom;p.montant=mt;p.jour=jour;}
+    if(p){
+      p.nom=nom;p.montant=mt;p.jour=jour;
+      // Répercuter le nom et le jour sur le gabarit annuel
+      if(p.annId){
+        const anns=getAnn(); const a=anns.find(x=>x.id===p.annId);
+        if(a){
+          a.nom=nom; a.jour=jour;
+          // Mettre à jour toutes les occurrences existantes du gabarit
+          for(let m=0;m<12;m++){
+            const mData=getMD(CY,m);
+            const occ=mData.ponctuelles.find(x=>x.annId===p.annId);
+            if(occ){occ.nom=nom;occ.jour=jour;saveMD(CY,m,mData);}
+          }
+          saveAnn(anns);
+        }
+      }
+    }
   }
   saveCD(d); closeModal('modalQuickEdit'); render(); toast('Prélèvement modifié ✓');
 }
