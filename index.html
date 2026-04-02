@@ -89,6 +89,12 @@ header{background:rgba(255,255,255,0.6);backdrop-filter:blur(12px);border-bottom
 .cr-amount{font-size:.9rem;font-weight:700;white-space:nowrap;color:var(--orange);}
 .cr-annual-dot{width:7px;height:7px;border-radius:50%;background:rgba(116,185,231,.6);flex-shrink:0;}
 
+/* ── Progress bar ── */
+.progress-bar-wrap{display:flex;align-items:center;gap:8px;padding:0 14px;margin-top:1px;}
+.progress-bar-bg{flex:1;height:5px;border-radius:4px;background:rgba(244,162,97,.2);overflow:hidden;}
+.progress-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--green),#3aad72);transition:width .4s ease;}
+.progress-pct{font-size:.65rem;font-weight:700;color:var(--muted);white-space:nowrap;min-width:28px;text-align:right;}
+
 /* ── Reste bar ── */
 .reste-bar{margin:6px 14px 4px;display:flex;justify-content:space-between;align-items:center;padding:6px 12px;background:rgba(244,162,97,.08);border-radius:8px;font-size:.78rem;color:var(--muted);}
 .reste-bar .v{font-weight:700;color:var(--orange);}
@@ -262,6 +268,12 @@ input:focus,select:focus{border-color:rgba(100,180,220,.6);box-shadow:0 0 0 3px 
       <div class="sec-badge badge-c" id="totCh">0 €</div>
       <span class="sec-chev">▾</span>
     </div>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+    <span class="progress-pct" id="progressPct">0%</span>
   </div>
   <div class="sec-body">
     <div class="reste-bar" style="margin-top:8px">
@@ -638,6 +650,8 @@ function renderChargesMois(){
     document.getElementById('totCh').textContent='0 €';
     document.getElementById('chPaid').textContent='0 €';
     document.getElementById('chReste').textContent='0 €';
+    document.getElementById('progressFill').style.width='0%';
+    document.getElementById('progressPct').textContent='0%';
     return;
   }
   let total=0,paid=0;
@@ -660,6 +674,9 @@ function renderChargesMois(){
   document.getElementById('totCh').textContent=fmt(total);
   document.getElementById('chPaid').textContent=fmt(paid);
   document.getElementById('chReste').textContent=fmt(total-paid);
+  const pct=total>0?Math.round(paid/total*100):0;
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('progressPct').textContent=pct+'%';
 }
 
 function toggleCharge(id,type){
