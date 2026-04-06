@@ -255,9 +255,12 @@ input:focus,select:focus{border-color:rgba(100,180,220,.6);box-shadow:0 0 0 3px 
 </div>
 
 <!-- Notif -->
-<div class="notif" id="notif">
-  <strong>⏰ Prélèvements non débités :</strong> <span id="notifTotal" style="font-weight:700;color:#9a5a2a;"></span>
-  <ul id="notifList"></ul>
+<div class="notif" id="notif" onclick="toggleNotifDetail()" style="cursor:pointer">
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <span>⏰ <strong id="notifSummary"></strong></span>
+    <span id="notifChev" style="font-size:.7rem;color:#9a5a2a;transition:transform .2s">▾</span>
+  </div>
+  <ul id="notifList" style="display:none;margin-top:6px;padding-left:0;list-style:none"></ul>
 </div>
 
 <!-- ═══ CHARGES DU MOIS ═══ -->
@@ -1113,9 +1116,10 @@ function checkNotifs(){
     .sort((a,b)=>a.jour-b.jour);
   if(up.length){
     const totalUp=up.reduce((s,u)=>s+u.montant,0);
-    document.getElementById('notifTotal').textContent=`(${fmt(totalUp)})`;
+    document.getElementById('notifSummary').textContent=
+      `${up.length} prélèvement${up.length>1?'s':''} non débité${up.length>1?'s':''} — ${fmt(totalUp)}`;
     document.getElementById('notifList').innerHTML=up.map(u=>
-      `<li><strong>${esc(u.nom)}</strong> — ${fmt(u.montant)}</li>`
+      `<li style="padding:2px 0"><strong>${esc(u.nom)}</strong> — ${fmt(u.montant)}</li>`
     ).join('');
     banner.classList.add('on');
   } else banner.classList.remove('on');
@@ -1172,6 +1176,13 @@ document.addEventListener('keydown',e=>{
 });
 
 function openInfo(){ document.getElementById('modalInfo').classList.add('open'); }
+
+let notifOpen=false;
+function toggleNotifDetail(){
+  notifOpen=!notifOpen;
+  document.getElementById('notifList').style.display=notifOpen?'block':'none';
+  document.getElementById('notifChev').style.transform=notifOpen?'rotate(180deg)':'rotate(0deg)';
+}
 
 init();
 </script>
