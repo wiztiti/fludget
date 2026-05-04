@@ -55,12 +55,7 @@ header{background:rgba(255,255,255,0.6);backdrop-filter:blur(12px);border-bottom
 .bal-s .bal-value.neg{color:var(--red);}
 
 /* ── Notif ── */
-.notif{margin:10px 16px 0;background:linear-gradient(135deg,rgba(244,162,97,.15),rgba(240,128,128,.12));border:1px solid rgba(244,162,97,.35);border-radius:var(--rs);padding:10px 14px;font-size:.8rem;color:#9a5a2a;display:none;}
-.notif.on{display:block;}
-.notif strong{font-weight:700;margin-right:4px;}
-.notif ul{padding-left:0;list-style:none;}
-.notif li{margin:0;display:inline;}
-.notif li+li::before{content:' · ';font-weight:700;}
+
 
 /* ── Section ── */
 .section{margin:14px 16px 0;background:var(--card);backdrop-filter:blur(10px);border:1px solid var(--card-border);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;}
@@ -255,13 +250,7 @@ input:focus,select:focus{border-color:rgba(100,180,220,.6);box-shadow:0 0 0 3px 
 </div>
 
 <!-- Notif -->
-<div class="notif" id="notif" onclick="toggleNotifDetail()" style="cursor:pointer">
-  <div style="display:flex;align-items:center;justify-content:space-between">
-    <span>⏰ <strong id="notifSummary"></strong></span>
-    <span id="notifChev" style="font-size:.7rem;color:#9a5a2a;transition:transform .2s">▾</span>
-  </div>
-  <ul id="notifList" style="display:none;margin-top:6px;padding-left:0;list-style:none"></ul>
-</div>
+
 
 <!-- ═══ CHARGES DU MOIS ═══ -->
 <div class="section" id="secCharges">
@@ -539,7 +528,7 @@ function render(){
   document.getElementById('curLabel').textContent=`${ML[CM]} ${CY}`;
   injectAnnuals();
   renderRev(); renderChargesMois(); renderEditMens(); renderEditAnn();
-  updateBalance(); checkNotifs();
+  updateBalance();
 }
 
 // ══ Inject annuals into current month ══
@@ -1102,27 +1091,6 @@ function updateBalance(){
   document.getElementById('balC').textContent=fmtNoEur(tAll);
   document.getElementById('balReste').textContent=`reste ${fmtNoEur(reste)}`;
   const el=document.getElementById('balS'); el.textContent=fmtNoEur(solde); el.classList.toggle('neg',solde<0);
-}
-
-// ══ Notifications ══
-function checkNotifs(){
-  const d=CD(); const now=new Date();
-  const isCur=now.getFullYear()===CY&&now.getMonth()===CM;
-  const banner=document.getElementById('notif');
-  if(!isCur){banner.classList.remove('on');return;}
-  const today=now.getDate();
-  const up=[...d.charges,...d.ponctuelles]
-    .filter(x=>!x.checked&&x.jour&&x.jour<=today+1)
-    .sort((a,b)=>a.jour-b.jour);
-  if(up.length){
-    const totalUp=up.reduce((s,u)=>s+u.montant,0);
-    document.getElementById('notifSummary').textContent=
-      `${up.length} prélèvement${up.length>1?'s':''} non débité${up.length>1?'s':''} — ${fmt(totalUp)}`;
-    document.getElementById('notifList').innerHTML=up.map(u=>
-      `<li style="padding:2px 0"><strong>${esc(u.nom)}</strong> — ${fmt(u.montant)}</li>`
-    ).join('');
-    banner.classList.add('on');
-  } else banner.classList.remove('on');
 }
 
 // ══ Purge orphans ══
