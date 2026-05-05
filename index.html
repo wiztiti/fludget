@@ -1392,12 +1392,26 @@ function renderMonthGraph(){
   // Trier par position chronologique
   moves.sort((a,b)=>a.pos-b.pos);
 
-  // Construire les points avec pos comme axe X
-  const points=[{pos:moves[0].pos-0.5,solde:0}];
-  let solde=0;
+  // Grouper les mouvements du même jour
+  const grouped=[];
   moves.forEach(m=>{
+    const last=grouped[grouped.length-1];
+    if(last&&last.pos===m.pos){
+      last.amount+=m.amount;
+      last.label+=' + '+m.nom;
+      // type mixte : si revenus et charges → 'mix', sinon garder
+      if(last.type!==m.type) last.type='mix';
+    } else {
+      grouped.push({...m});
+    }
+  });
+
+  // Construire les points — commence directement au 1er mouvement
+  let solde=0;
+  const points=[];
+  grouped.forEach(m=>{
     solde+=m.amount;
-    points.push({pos:m.pos,solde,label:m.nom,dateLabel:m.dateLabel,type:m.type,amount:m.amount});
+    points.push({pos:m.pos,day:m.day,solde,label:m.label,dateLabel:m.dateLabel,type:m.type});
   });
 
   document.getElementById('graphSub').textContent=
@@ -1466,10 +1480,17 @@ function drawGraph(points){
   }
 
   // Fill under curve
+  const baseY=yPos(Math.max(0,minS));
   ctx.beginPath();
-  smoothCurve(points);
-  ctx.lineTo(xPos(points[points.length-1].pos), yPos(minS<0?0:minS));
-  ctx.lineTo(xPos(points[0].pos), yPos(minS<0?0:minS));
+  ctx.moveTo(xPos(points[0].pos), baseY);
+  ctx.lineTo(xPos(points[0].pos), yPos(points[0].solde));
+  for(let i=1;i<points.length;i++){
+    const x0=xPos(points[i-1].pos), y0=yPos(points[i-1].solde);
+    const x1=xPos(points[i].pos),   y1=yPos(points[i].solde);
+    const cpx=(x0+x1)/2;
+    ctx.bezierCurveTo(cpx,y0,cpx,y1,x1,y1);
+  }
+  ctx.lineTo(xPos(points[points.length-1].pos), baseY);
   ctx.closePath();
   const grad=ctx.createLinearGradient(0,pad.t,0,pad.t+gh);
   grad.addColorStop(0,'rgba(82,183,136,0.25)');
@@ -1479,7 +1500,13 @@ function drawGraph(points){
 
   // Smooth stroke
   ctx.beginPath();
-  smoothCurve(points);
+  ctx.moveTo(xPos(points[0].pos), yPos(points[0].solde));
+  for(let i=1;i<points.length;i++){
+    const x0=xPos(points[i-1].pos), y0=yPos(points[i-1].solde);
+    const x1=xPos(points[i].pos),   y1=yPos(points[i].solde);
+    const cpx=(x0+x1)/2;
+    ctx.bezierCurveTo(cpx,y0,cpx,y1,x1,y1);
+  }
   ctx.strokeStyle='rgba(82,183,136,0.9)';
   ctx.lineWidth=2.5;
   ctx.lineJoin='round';
