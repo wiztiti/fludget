@@ -719,17 +719,17 @@ function openCheckin(id){
   const today=now.getDate();
   const thisMonth=now.getMonth(); // 0-indexed
   document.getElementById('checkinRevId').value=id;
-  document.getElementById('checkinDay').value=today;
-  // Populate month select : mois courant + mois précédent
+  document.getElementById('checkinDay').value=28;
+  // Populate month select : mois courant + mois précédent, M-1 sélectionné par défaut
   const sel=document.getElementById('checkinMonth');
   sel.innerHTML='';
   for(let i=0;i<=1;i++){
     let m=thisMonth-i; let y=CY;
     if(m<0){m+=12;y--;}
     const opt=document.createElement('option');
-    opt.value=m; // 0-indexed
+    opt.value=m;
     opt.textContent=ML[m]+(y!==CY?' '+y:'');
-    if(i===0) opt.selected=true;
+    if(i===1) opt.selected=true; // M-1 par défaut
     sel.appendChild(opt);
   }
   document.getElementById('modalCheckin').classList.add('open');
@@ -1454,13 +1454,20 @@ function drawGraph(points){
     ctx.setLineDash([]);
   }
 
+  // Smooth curve helper
+  function smoothCurve(pts){
+    ctx.moveTo(xPos(pts[0].pos), yPos(pts[0].solde));
+    for(let i=1;i<pts.length;i++){
+      const x0=xPos(pts[i-1].pos), y0=yPos(pts[i-1].solde);
+      const x1=xPos(pts[i].pos),   y1=yPos(pts[i].solde);
+      const cpx=(x0+x1)/2;
+      ctx.bezierCurveTo(cpx,y0,cpx,y1,x1,y1);
+    }
+  }
+
   // Fill under curve
   ctx.beginPath();
-  ctx.moveTo(xPos(points[0].pos), yPos(points[0].solde));
-  for(let i=1;i<points.length;i++){
-    ctx.lineTo(xPos(points[i].pos), yPos(points[i-1].solde));
-    ctx.lineTo(xPos(points[i].pos), yPos(points[i].solde));
-  }
+  smoothCurve(points);
   ctx.lineTo(xPos(points[points.length-1].pos), yPos(minS<0?0:minS));
   ctx.lineTo(xPos(points[0].pos), yPos(minS<0?0:minS));
   ctx.closePath();
@@ -1470,13 +1477,9 @@ function drawGraph(points){
   ctx.fillStyle=grad;
   ctx.fill();
 
-  // Curve (step)
+  // Smooth stroke
   ctx.beginPath();
-  ctx.moveTo(xPos(points[0].pos), yPos(points[0].solde));
-  for(let i=1;i<points.length;i++){
-    ctx.lineTo(xPos(points[i].pos), yPos(points[i-1].solde));
-    ctx.lineTo(xPos(points[i].pos), yPos(points[i].solde));
-  }
+  smoothCurve(points);
   ctx.strokeStyle='rgba(82,183,136,0.9)';
   ctx.lineWidth=2.5;
   ctx.lineJoin='round';
@@ -1492,12 +1495,11 @@ function drawGraph(points){
     ctx.fill();
     ctx.strokeStyle='white'; ctx.lineWidth=1.5; ctx.stroke();
 
-    // Date label on X axis (jour + mois si mois précédent)
+    // Day number only on X axis
     ctx.fillStyle='rgba(100,140,180,0.7)';
     ctx.font=`600 9px Nunito,sans-serif`;
     ctx.textAlign='center';
-    const lbl=p.dateLabel||String(p.pos);
-    ctx.fillText(lbl, x, H-pad.b+14);
+    ctx.fillText(p.day||Math.round(p.pos), x, H-pad.b+14);
   });
 }
 
