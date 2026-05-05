@@ -548,6 +548,29 @@ canvas{width:100%;border-radius:8px;}
   </div>
 </div>
 
+<!-- ═══ MODAL : Date encaissement ═══ -->
+<div class="overlay" id="modalCheckin">
+  <div class="modal" style="max-width:320px">
+    <h3>📅 Date d'encaissement</h3>
+    <p class="sub">Quel jour ce revenu a-t-il été encaissé ?</p>
+    <input type="hidden" id="checkinRevId"/>
+    <div style="display:flex;gap:10px;align-items:flex-end">
+      <div class="fg">
+        <label>Jour</label>
+        <input type="number" id="checkinDay" min="1" max="31" placeholder="ex: 28" style="font-size:1.2rem;font-weight:800;text-align:center"/>
+      </div>
+      <div class="fg">
+        <label>Mois</label>
+        <select id="checkinMonth" style="font-size:.85rem"></select>
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="mq-btn mq-btn-cancel" onclick="closeModal('modalCheckin')">Annuler</button>
+      <button class="mq-btn mq-btn-save" onclick="confirmCheckin()">Confirmer</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ MODAL : Édition rapide revenu ═══ -->
 <div class="overlay" id="modalRevEdit">
   <div class="modal">
@@ -678,9 +701,49 @@ function addRev(){
 function delRev(id){const d=CD();d.revenus=d.revenus.filter(r=>r.id!==id);saveCD(d);render();}
 function toggleRev(id){
   if(revLpTriggered) return;
-  const d=CD(); const today=new Date().getDate();
-  const r=d.revenus.find(x=>x.id===id);
-  if(r){r.checked=!r.checked; if(r.checked) r.checkedDate=r.jour||today; else delete r.checkedDate; saveCD(d);render();}
+  const d=CD(); const r=d.revenus.find(x=>x.id===id); if(!r) return;
+  if(r.checked){
+    // Décocher directement
+    r.checked=false; delete r.checkedDate; delete r.checkedMonth;
+    saveCD(d); render();
+  } else {
+    // Ouvrir popup date encaissement
+    openCheckin(id);
+  }
+}
+
+function openCheckin(id){
+  const now=new Date();
+  const today=now.getDate();
+  const thisMonth=now.getMonth(); // 0-indexed
+  document.getElementById('checkinRevId').value=id;
+  document.getElementById('checkinDay').value=today;
+  // Populate month select : mois courant + mois précédent
+  const sel=document.getElementById('checkinMonth');
+  sel.innerHTML='';
+  for(let i=0;i<=1;i++){
+    let m=thisMonth-i; let y=CY;
+    if(m<0){m+=12;y--;}
+    const opt=document.createElement('option');
+    opt.value=m; // 0-indexed
+    opt.textContent=ML[m]+(y!==CY?' '+y:'');
+    if(i===0) opt.selected=true;
+    sel.appendChild(opt);
+  }
+  document.getElementById('modalCheckin').classList.add('open');
+  setTimeout(()=>document.getElementById('checkinDay').focus(),100);
+}
+
+function confirmCheckin(){
+  const id=document.getElementById('checkinRevId').value;
+  const day=parseInt(document.getElementById('checkinDay').value);
+  const month=parseInt(document.getElementById('checkinMonth').value); // 0-indexed
+  if(isNaN(day)||day<1||day>31){toast('Jour invalide');return;}
+  const d=CD(); const r=d.revenus.find(x=>x.id===id); if(!r) return;
+  r.checked=true;
+  r.checkedDate=day;
+  r.checkedMonth=month; // stocker le mois réel
+  saveCD(d); closeModal('modalCheckin'); render();
 }
 
 // ── Long press revenus ──
@@ -1288,7 +1351,10 @@ function renderMonthGraph(){
   const moves=[];
   d.revenus.filter(r=>r.checked).forEach(r=>{
     const day=r.checkedDate||r.jour||1;
-    moves.push({day,amount:r.montant,type:'rev',nom:r.nom});
+    // Si encaissé un mois différent du mois affiché, on l'inclut quand même
+    // mais on place le point au jour correct
+    moves.push({day,amount:r.montant,type:'rev',nom:r.nom,
+      monthLabel: r.checkedMonth!=null && r.checkedMonth!==GM ? `(${ML[r.checkedMonth]})` : null});
   });
   d.charges.filter(c=>c.checked).forEach(c=>{
     const day=c.checkedDate||c.jour||1;
