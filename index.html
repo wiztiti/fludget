@@ -324,6 +324,7 @@ canvas{width:100%;border-radius:8px;}
     <div class="add-form" id="revForm" style="display:none">
       <div class="fg" style="flex:2"><label>Libellé</label><input type="text" id="revNom" placeholder="Salaire, CAF…"/></div>
       <div class="fg"><label>Montant €</label><input type="number" id="revMt" placeholder="0" min="0" step="0.01"/></div>
+      <div class="fg" style="max-width:80px"><label>Jour</label><input type="number" id="revJour" placeholder="1-31" min="1" max="31"/></div>
       <button class="btn-add" onclick="addRev()">+ Ajouter</button>
     </div>
   </div>
@@ -554,7 +555,10 @@ canvas{width:100%;border-radius:8px;}
     <p class="sub">Modification pour ce mois uniquement.</p>
     <input type="hidden" id="mrId"/>
     <div class="fg"><label>Libellé</label><input type="text" id="mrNom" placeholder="Salaire…"/></div>
-    <div class="fg"><label>Montant €</label><input type="number" id="mrMt" placeholder="0" min="0" step="0.01"/></div>
+    <div style="display:flex;gap:8px">
+      <div class="fg"><label>Montant €</label><input type="number" id="mrMt" placeholder="0" min="0" step="0.01"/></div>
+      <div class="fg" style="max-width:100px"><label>Jour encaiss.</label><input type="number" id="mrJour" placeholder="1-31" min="1" max="31"/></div>
+    </div>
     <div id="mrConfirmDel" style="display:none;margin-top:12px;padding:10px 12px;background:rgba(240,128,128,0.1);border:1px solid rgba(240,128,128,0.3);border-radius:var(--rs);font-size:.82rem;color:#c0392b;">
       Confirmer la suppression de ce revenu ?
       <div style="display:flex;gap:8px;margin-top:8px">
@@ -642,7 +646,10 @@ function renderRev(){
   let t=0;
   el.innerHTML=d.revenus.map(r=>{t+=r.montant;return`
     <div class="rev-row ${r.checked?'done':''}" data-rev-id="${r.id}" onclick="toggleRev('${r.id}')">
-      <div class="rev-name">${esc(r.nom)}</div>
+      <div class="rev-info" style="flex:1;min-width:0">
+        <div class="rev-name">${esc(r.nom)}</div>
+        ${r.jour?`<div style="font-size:.7rem;color:var(--muted);margin-top:1px">Encaissement le ${r.jour}</div>`:''}
+      </div>
       <div class="rev-amount">${fmt(r.montant)}</div>
     </div>`;}).join('');
   document.getElementById('totRev').textContent=fmt(t);
@@ -659,9 +666,11 @@ function toggleRevForm(){
 function addRev(){
   const nom=document.getElementById('revNom').value.trim();
   const mt=parseFloat(document.getElementById('revMt').value);
+  const jour=parseInt(document.getElementById('revJour').value)||null;
   if(!nom||isNaN(mt)||mt<=0){toast('Remplis le libellé et le montant');return;}
-  const d=CD(); d.revenus.push({id:uid(),nom,montant:mt}); saveCD(d); render();
+  const d=CD(); d.revenus.push({id:uid(),nom,montant:mt,jour}); saveCD(d); render();
   document.getElementById('revNom').value=''; document.getElementById('revMt').value='';
+  document.getElementById('revJour').value='';
   document.getElementById('revForm').style.display='none';
   document.getElementById('btnRevForm').textContent='+';
   toast('Revenu ajouté ✓');
@@ -696,6 +705,7 @@ function openRevEdit(id){
   document.getElementById('mrId').value=id;
   document.getElementById('mrNom').value=r.nom;
   document.getElementById('mrMt').value=r.montant;
+  document.getElementById('mrJour').value=r.jour||'';
   document.getElementById('mrConfirmDel').style.display='none';
   document.getElementById('modalRevEdit').classList.add('open');
 }
@@ -705,7 +715,8 @@ function saveRevEdit(){
   const mt=parseFloat(document.getElementById('mrMt').value);
   if(!nom||isNaN(mt)||mt<=0){toast('Remplis le libellé et le montant');return;}
   const d=CD(); const r=d.revenus.find(x=>x.id===id);
-  if(r){r.nom=nom;r.montant=mt;}
+  const jour=parseInt(document.getElementById('mrJour').value)||null;
+  if(r){r.nom=nom;r.montant=mt;r.jour=jour;}
   saveCD(d); closeModal('modalRevEdit'); render(); toast('Revenu modifié ✓');
 }
 function confirmRevDelete(){
