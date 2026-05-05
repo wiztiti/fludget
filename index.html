@@ -1272,16 +1272,20 @@ function renderGraph(){
 
 function renderMonthGraph(){
   const d=getMD(GY,GM);
-  // Collecter tous les mouvements cochés avec leur date de coche
+  // Collecter tous les mouvements cochés
+  // Si checkedDate absent (coché avant la MAJ), fallback sur jour de prélèvement ou jour 1
   const moves=[];
-  d.revenus.filter(r=>r.checked&&r.checkedDate).forEach(r=>{
-    moves.push({day:r.checkedDate,amount:r.montant,type:'rev',nom:r.nom});
+  d.revenus.filter(r=>r.checked).forEach(r=>{
+    const day=r.checkedDate||r.jour||1;
+    moves.push({day,amount:r.montant,type:'rev',nom:r.nom});
   });
-  d.charges.filter(c=>c.checked&&c.checkedDate).forEach(c=>{
-    moves.push({day:c.checkedDate,amount:-c.montant,type:'ch',nom:c.nom});
+  d.charges.filter(c=>c.checked).forEach(c=>{
+    const day=c.checkedDate||c.jour||1;
+    moves.push({day,amount:-c.montant,type:'ch',nom:c.nom});
   });
-  d.ponctuelles.filter(p=>p.checked&&p.checkedDate).forEach(p=>{
-    moves.push({day:p.checkedDate,amount:-p.montant,type:'ch',nom:p.nom});
+  d.ponctuelles.filter(p=>p.checked).forEach(p=>{
+    const day=p.checkedDate||p.jour||1;
+    moves.push({day,amount:-p.montant,type:'ch',nom:p.nom});
   });
 
   if(!moves.length){
