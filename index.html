@@ -671,7 +671,7 @@ function toggleRev(id){
   if(revLpTriggered) return;
   const d=CD(); const today=new Date().getDate();
   const r=d.revenus.find(x=>x.id===id);
-  if(r){r.checked=!r.checked; if(r.checked) r.checkedDate=today; else delete r.checkedDate; saveCD(d);render();}
+  if(r){r.checked=!r.checked; if(r.checked) r.checkedDate=r.jour||today; else delete r.checkedDate; saveCD(d);render();}
 }
 
 // ── Long press revenus ──
@@ -762,10 +762,10 @@ function toggleCharge(id,type){
   const d=CD(); const today=new Date().getDate();
   if(type==='mens'){
     const c=d.charges.find(x=>x.id===id);
-    if(c){c.checked=!c.checked; if(c.checked) c.checkedDate=today; else delete c.checkedDate; saveCD(d);render();}
+    if(c){c.checked=!c.checked; if(c.checked) c.checkedDate=c.jour||today; else delete c.checkedDate; saveCD(d);render();}
   } else {
     const p=d.ponctuelles.find(x=>x.id===id);
-    if(p){p.checked=!p.checked; if(p.checked) p.checkedDate=today; else delete p.checkedDate; saveCD(d);render();}
+    if(p){p.checked=!p.checked; if(p.checked) p.checkedDate=p.jour||today; else delete p.checkedDate; saveCD(d);render();}
   }
 }
 
