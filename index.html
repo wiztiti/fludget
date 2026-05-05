@@ -30,7 +30,7 @@
   --r:16px; --rs:10px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;user-select:none;}
-body{font-family:'Nunito',sans-serif;background:linear-gradient(145deg,#dff0f7 0%,#f0f7ea 50%,#e8f5f0 100%);min-height:100vh;color:var(--text);padding-bottom:60px;}
+body{font-family:'Nunito',sans-serif;background:linear-gradient(145deg,#dff0f7 0%,#f0f7ea 50%,#e8f5f0 100%);min-height:100vh;color:var(--text);padding-bottom:72px;}
 
 /* ── Header ── */
 header{background:rgba(255,255,255,0.6);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,0.8);padding:12px 16px;position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:8px;}
@@ -195,6 +195,35 @@ input:focus,select:focus{border-color:rgba(100,180,220,.6);box-shadow:0 0 0 3px 
   .balance-bar{display:flex;flex-direction:row;justify-content:space-around;}
 }
 
+/* ── Tapbar ── */
+.tapbar{position:fixed;bottom:0;left:0;right:0;height:60px;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);border-top:1px solid rgba(200,220,240,0.5);display:flex;align-items:stretch;z-index:200;}
+.tap-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:none;cursor:pointer;color:var(--muted);transition:color .15s;padding:0;}
+.tap-btn.active{color:#2a6049;}
+.tap-btn .tap-icon{font-size:1.3rem;line-height:1;}
+.tap-btn .tap-label{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
+.tap-btn.active .tap-label{color:#2a6049;}
+
+/* ── Pages ── */
+.page{display:none;}
+.page.active{display:block;}
+
+/* ── Graph page ── */
+.graph-page{padding:16px;}
+.graph-card{background:rgba(255,255,255,0.75);backdrop-filter:blur(8px);border:1px solid var(--card-border);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);margin-bottom:14px;}
+.graph-card h3{font-size:.85rem;font-weight:800;color:var(--text);margin-bottom:4px;}
+.graph-card .graph-sub{font-size:.72rem;color:var(--muted);margin-bottom:12px;}
+.graph-toggle{display:flex;gap:6px;margin-bottom:14px;}
+.graph-toggle-btn{flex:1;padding:7px;border-radius:var(--rs);border:1.5px solid rgba(150,200,230,.3);background:rgba(255,255,255,.7);font-family:'Nunito',sans-serif;font-size:.78rem;font-weight:700;color:var(--muted);cursor:pointer;transition:all .15s;text-align:center;}
+.graph-toggle-btn.active{background:linear-gradient(135deg,var(--bf),var(--bt));border-color:transparent;color:var(--btext);box-shadow:var(--bsh);}
+.graph-toggle-btn.disabled{opacity:.4;cursor:not-allowed;}
+canvas{width:100%;border-radius:8px;}
+
+/* ── Params page ── */
+.params-page{padding:16px;}
+.params-card{background:rgba(255,255,255,0.75);backdrop-filter:blur(8px);border:1px solid var(--card-border);border-radius:var(--r);padding:20px;box-shadow:var(--shadow);text-align:center;color:var(--muted);font-size:.88rem;}
+.params-card .params-icon{font-size:2.5rem;margin-bottom:12px;}
+.params-card p{line-height:1.6;}
+
 /* ── Quick edit buttons ── */
 .mq-btn { border:none; border-radius:var(--rs); padding:9px 16px; font-family:'Nunito',sans-serif; font-size:.85rem; font-weight:700; cursor:pointer; transition:transform .12s, box-shadow .12s; }
 .mq-btn:hover { transform:translateY(-1px); }
@@ -221,6 +250,8 @@ input:focus,select:focus{border-color:rgba(100,180,220,.6);box-shadow:0 0 0 3px 
 </head>
 <body>
 
+<!-- ═══ PAGE BUDGET ═══ -->
+<div class="page active" id="pageBudget">
 <header>
   <button class="btn-info" onclick="openInfo()" title="À propos de Fludget">ℹ️</button>
   <div class="month-nav">
@@ -335,6 +366,60 @@ input:focus,select:focus{border-color:rgba(100,180,220,.6);box-shadow:0 0 0 3px 
       </div>
     </div>
   </div>
+</div>
+
+</div><!-- /pageBudget -->
+
+<!-- ═══ PAGE GRAPHIQUE ═══ -->
+<div class="page" id="pageGraph">
+<div class="graph-page">
+  <div class="month-nav" style="margin-bottom:12px">
+    <button onclick="changeGraphMonth(-1)">‹</button>
+    <span id="graphNavLabel" style="font-weight:700;font-size:1rem;color:var(--text);text-align:center;white-space:nowrap;min-width:140px"></span>
+    <button onclick="changeGraphMonth(1)">›</button>
+  </div>
+  <div class="graph-toggle">
+    <button class="graph-toggle-btn active" id="btnGraphMonth" onclick="switchGraphView('month')">📅 Mensuel</button>
+    <button class="graph-toggle-btn disabled" id="btnGraphYear" title="Bientôt disponible">📆 Annuel</button>
+  </div>
+  <div class="graph-card">
+    <h3 id="graphTitle">Solde courant — <span id="graphMonthLabel"></span></h3>
+    <div class="graph-sub" id="graphSub">Évolution du solde au fil des mouvements cochés</div>
+    <canvas id="graphCanvas" height="260"></canvas>
+  </div>
+  <div class="graph-card" style="font-size:.78rem;color:var(--muted);line-height:1.6">
+    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+      <span><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--green);margin-right:4px;vertical-align:middle"></span>Revenus encaissés</span>
+      <span><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--orange);margin-right:4px;vertical-align:middle"></span>Prélèvements passés</span>
+    </div>
+  </div>
+</div>
+</div><!-- /pageGraph -->
+
+<!-- ═══ PAGE PARAMÈTRES ═══ -->
+<div class="page" id="pageParams">
+<div class="params-page">
+  <div class="params-card">
+    <div class="params-icon">⚙️</div>
+    <p>Les paramètres arrivent bientôt.<br>Cette section permettra de personnaliser Fludget selon vos besoins.</p>
+  </div>
+</div>
+</div><!-- /pageParams -->
+
+<!-- ═══ TAPBAR ═══ -->
+<div class="tapbar">
+  <button class="tap-btn active" id="tabBudget" onclick="switchTab('budget')">
+    <span class="tap-icon">🏠</span>
+    <span class="tap-label">Budget</span>
+  </button>
+  <button class="tap-btn" id="tabGraph" onclick="switchTab('graph')">
+    <span class="tap-icon">📊</span>
+    <span class="tap-label">Graphique</span>
+  </button>
+  <button class="tap-btn" id="tabParams" onclick="switchTab('params')">
+    <span class="tap-icon">⚙️</span>
+    <span class="tap-label">Paramètres</span>
+  </button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -517,7 +602,7 @@ function saveCD(d){saveMD(CY,CM,d);}
 
 // ══ Init ══
 function init(){
-  const n=new Date(); CY=n.getFullYear(); CM=n.getMonth();
+  const n=new Date(); CY=n.getFullYear(); CM=n.getMonth(); GY=CY; GM=CM;
   purgeOrphans();
   render();
 }
@@ -584,8 +669,9 @@ function addRev(){
 function delRev(id){const d=CD();d.revenus=d.revenus.filter(r=>r.id!==id);saveCD(d);render();}
 function toggleRev(id){
   if(revLpTriggered) return;
-  const d=CD(); const r=d.revenus.find(x=>x.id===id);
-  if(r){r.checked=!r.checked;saveCD(d);render();}
+  const d=CD(); const today=new Date().getDate();
+  const r=d.revenus.find(x=>x.id===id);
+  if(r){r.checked=!r.checked; if(r.checked) r.checkedDate=today; else delete r.checkedDate; saveCD(d);render();}
 }
 
 // ── Long press revenus ──
@@ -672,10 +758,15 @@ function renderChargesMois(){
 }
 
 function toggleCharge(id,type){
-  if(longPressTriggered) return; // ignore tap if long press just fired
-  const d=CD();
-  if(type==='mens'){const c=d.charges.find(x=>x.id===id);if(c){c.checked=!c.checked;saveCD(d);render();}}
-  else{const p=d.ponctuelles.find(x=>x.id===id);if(p){p.checked=!p.checked;saveCD(d);render();}}
+  if(longPressTriggered) return;
+  const d=CD(); const today=new Date().getDate();
+  if(type==='mens'){
+    const c=d.charges.find(x=>x.id===id);
+    if(c){c.checked=!c.checked; if(c.checked) c.checkedDate=today; else delete c.checkedDate; saveCD(d);render();}
+  } else {
+    const p=d.ponctuelles.find(x=>x.id===id);
+    if(p){p.checked=!p.checked; if(p.checked) p.checkedDate=today; else delete p.checkedDate; saveCD(d);render();}
+  }
 }
 
 // ── Long press ──
@@ -1144,6 +1235,190 @@ document.addEventListener('keydown',e=>{
 });
 
 function openInfo(){ document.getElementById('modalInfo').classList.add('open'); }
+
+// ══ Tab switching ══
+let currentTab='budget';
+function switchTab(tab){
+  currentTab=tab;
+  ['budget','graph','params'].forEach(t=>{
+    document.getElementById('page'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active',t===tab);
+    document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active',t===tab);
+  });
+  if(tab==='graph'){ GY=CY; GM=CM; renderGraph(); }
+}
+
+// ══ Graph ══
+let graphView='month';
+let GY, GM; // graph year/month, independent from budget nav
+
+function switchGraphView(v){
+  if(v==='year') return; // disabled
+  graphView=v;
+  renderGraph();
+}
+
+function changeGraphMonth(d){
+  GM+=d;
+  if(GM>11){GM=0;GY++;}
+  if(GM<0){GM=11;GY--;}
+  renderGraph();
+}
+
+function renderGraph(){
+  document.getElementById('graphNavLabel').textContent=`${ML[GM]} ${GY}`;
+  document.getElementById('graphMonthLabel').textContent=`${ML[GM]} ${GY}`;
+  renderMonthGraph();
+}
+
+function renderMonthGraph(){
+  const d=getMD(GY,GM);
+  // Collecter tous les mouvements cochés avec leur date de coche
+  const moves=[];
+  d.revenus.filter(r=>r.checked&&r.checkedDate).forEach(r=>{
+    moves.push({day:r.checkedDate,amount:r.montant,type:'rev',nom:r.nom});
+  });
+  d.charges.filter(c=>c.checked&&c.checkedDate).forEach(c=>{
+    moves.push({day:c.checkedDate,amount:-c.montant,type:'ch',nom:c.nom});
+  });
+  d.ponctuelles.filter(p=>p.checked&&p.checkedDate).forEach(p=>{
+    moves.push({day:p.checkedDate,amount:-p.montant,type:'ch',nom:p.nom});
+  });
+
+  if(!moves.length){
+    drawEmptyGraph();
+    document.getElementById('graphSub').textContent='Aucun mouvement coché ce mois';
+    return;
+  }
+
+  // Trier par date de coche
+  moves.sort((a,b)=>a.day-b.day);
+
+  // Construire les points
+  const points=[{day:moves[0].day-0.5,solde:0,label:''}];
+  let solde=0;
+  moves.forEach(m=>{
+    solde+=m.amount;
+    points.push({day:m.day,solde,label:m.nom,type:m.type,amount:m.amount});
+  });
+
+  document.getElementById('graphSub').textContent=
+    `${moves.length} mouvement${moves.length>1?'s':''} · solde actuel : ${fmt(solde)}`;
+
+  drawGraph(points);
+}
+
+function drawGraph(points){
+  const canvas=document.getElementById('graphCanvas');
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.parentElement.clientWidth-32;
+  const H=260;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+
+  const pad={t:20,r:16,b:36,l:56};
+  const gw=W-pad.l-pad.r, gh=H-pad.t-pad.b;
+
+  // Valeurs min/max
+  const soldes=points.map(p=>p.solde);
+  let minS=Math.min(...soldes), maxS=Math.max(...soldes);
+  const range=maxS-minS||1;
+  minS-=range*0.1; maxS+=range*0.1;
+
+  const days=points.map(p=>p.day);
+  const minD=Math.min(...days), maxD=Math.max(...days);
+  const dRange=maxD-minD||1;
+
+  function xPos(d){ return pad.l+(d-minD)/dRange*gw; }
+  function yPos(s){ return pad.t+(1-(s-minS)/(maxS-minS))*gh; }
+
+  // Grid lines
+  ctx.strokeStyle='rgba(150,200,230,0.2)';
+  ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=pad.t+i*(gh/4);
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+gw,y); ctx.stroke();
+    const val=maxS-(i/4)*(maxS-minS);
+    ctx.fillStyle='rgba(100,140,180,0.6)';
+    ctx.font=`600 ${10}px Nunito,sans-serif`;
+    ctx.textAlign='right';
+    ctx.fillText(fmtNoEur(val), pad.l-6, y+4);
+  }
+
+  // Zero line
+  if(minS<0&&maxS>0){
+    const y0=yPos(0);
+    ctx.strokeStyle='rgba(240,128,128,0.4)';
+    ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(pad.l,y0); ctx.lineTo(pad.l+gw,y0); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Fill under curve
+  ctx.beginPath();
+  ctx.moveTo(xPos(points[0].day), yPos(points[0].solde));
+  for(let i=1;i<points.length;i++){
+    // Step chart (horizontal then vertical)
+    ctx.lineTo(xPos(points[i].day), yPos(points[i-1].solde));
+    ctx.lineTo(xPos(points[i].day), yPos(points[i].solde));
+  }
+  ctx.lineTo(xPos(points[points.length-1].day), yPos(minS<0?0:minS));
+  ctx.lineTo(xPos(points[0].day), yPos(minS<0?0:minS));
+  ctx.closePath();
+  const grad=ctx.createLinearGradient(0,pad.t,0,pad.t+gh);
+  grad.addColorStop(0,'rgba(82,183,136,0.25)');
+  grad.addColorStop(1,'rgba(82,183,136,0.03)');
+  ctx.fillStyle=grad;
+  ctx.fill();
+
+  // Curve (step)
+  ctx.beginPath();
+  ctx.moveTo(xPos(points[0].day), yPos(points[0].solde));
+  for(let i=1;i<points.length;i++){
+    ctx.lineTo(xPos(points[i].day), yPos(points[i-1].solde));
+    ctx.lineTo(xPos(points[i].day), yPos(points[i].solde));
+  }
+  ctx.strokeStyle='rgba(82,183,136,0.9)';
+  ctx.lineWidth=2.5;
+  ctx.lineJoin='round';
+  ctx.stroke();
+
+  // Points + labels
+  points.slice(1).forEach(p=>{
+    const x=xPos(p.day), y=yPos(p.solde);
+    // Dot
+    ctx.beginPath();
+    ctx.arc(x,y,5,0,Math.PI*2);
+    ctx.fillStyle=p.type==='rev'?'rgba(82,183,136,1)':'rgba(244,162,97,1)';
+    ctx.fill();
+    ctx.strokeStyle='white'; ctx.lineWidth=1.5; ctx.stroke();
+
+    // Day label on X axis
+    ctx.fillStyle='rgba(100,140,180,0.7)';
+    ctx.font=`600 9px Nunito,sans-serif`;
+    ctx.textAlign='center';
+    ctx.fillText(p.day, x, H-pad.b+14);
+  });
+}
+
+function drawEmptyGraph(){
+  const canvas=document.getElementById('graphCanvas');
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.parentElement.clientWidth-32;
+  const H=260;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.fillStyle='rgba(150,180,200,0.15)';
+  ctx.roundRect(0,0,W,H,12);
+  ctx.fill();
+  ctx.fillStyle='rgba(100,140,180,0.4)';
+  ctx.font=`700 13px Nunito,sans-serif`;
+  ctx.textAlign='center';
+  ctx.fillText('Aucun mouvement coché ce mois', W/2, H/2);
+}
 
 let notifOpen=false;
 function toggleNotifDetail(){
