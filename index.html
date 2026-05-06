@@ -1529,39 +1529,50 @@ function drawBars(points){
   const pad={t:20,r:16,b:36,l:58};
   const gw=W-pad.l-pad.r, gh=H-pad.t-pad.b;
 
-  const amounts=points.map(p=>Math.abs(p.solde-( points[points.indexOf(p)-1]?.solde||0)));
-  const maxA=Math.max(...points.map(p=>Math.abs(p.solde-(points[points.indexOf(p)-1]?.solde||0))),1);
+  const soldes=points.map(p=>p.solde);
+  let minS=Math.min(...soldes,0), maxS=Math.max(...soldes);
+  const range=maxS-minS||1;
+  minS-=range*0.08; maxS+=range*0.12;
 
   const totalDays=32;
-  const barW=Math.max(4, gw/totalDays*0.6);
+  const barW=Math.max(6, gw/totalDays*0.7);
   function xPos(bd){ return pad.l+(bd-1)/(totalDays-1)*gw; }
+  function yPos(s){ return pad.t+(1-(s-minS)/(maxS-minS))*gh; }
 
   // Grid
   ctx.strokeStyle='rgba(150,200,230,0.2)'; ctx.lineWidth=1;
   for(let i=0;i<=4;i++){
     const y=pad.t+i*(gh/4);
     ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+gw,y); ctx.stroke();
-    const val=maxA*(1-i/4);
     ctx.fillStyle='rgba(100,140,180,0.55)';
     ctx.font=`600 9px Nunito,sans-serif`; ctx.textAlign='right';
-    ctx.fillText(fmtNoEur(val), pad.l-5, y+3);
+    ctx.fillText(fmtNoEur(maxS-(i/4)*(maxS-minS)), pad.l-5, y+3);
   }
 
-  // Bars
-  points.forEach((p,i)=>{
-    const prev=i>0?points[i-1].solde:0;
-    const delta=p.solde-prev;
-    const barH=Math.abs(delta)/maxA*gh;
+  // Zero line
+  if(minS<0&&maxS>0){
+    const y0=yPos(0);
+    ctx.strokeStyle='rgba(240,128,128,0.4)'; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(pad.l,y0); ctx.lineTo(pad.l+gw,y0); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Bars representing solde at each point
+  const baseY=yPos(0);
+  points.forEach(p=>{
     const x=xPos(p.budgetDay);
-    const y=delta>=0 ? pad.t+gh-barH : pad.t+gh;
-    const isRev=delta>0;
-    const grad=ctx.createLinearGradient(0,y,0,y+barH);
-    grad.addColorStop(0, isRev?'rgba(82,183,136,0.9)':'rgba(244,162,97,0.9)');
-    grad.addColorStop(1, isRev?'rgba(82,183,136,0.4)':'rgba(244,162,97,0.4)');
+    const y=yPos(p.solde);
+    const barH=Math.abs(baseY-y);
+    const barTop=p.solde>=0?y:baseY;
+    const isPos=p.solde>=0;
+    const grad=ctx.createLinearGradient(0,barTop,0,barTop+barH);
+    grad.addColorStop(0, isPos?'rgba(82,183,136,0.9)':'rgba(244,162,97,0.9)');
+    grad.addColorStop(1, isPos?'rgba(82,183,136,0.3)':'rgba(244,162,97,0.3)');
     ctx.fillStyle=grad;
     ctx.beginPath();
-    ctx.roundRect(x-barW/2, y, barW, barH, 3);
+    ctx.roundRect(x-barW/2, barTop, barW, Math.max(barH,2), [3,3,0,0]);
     ctx.fill();
+    // Day label
     ctx.fillStyle='rgba(100,140,180,0.7)';
     ctx.font=`600 9px Nunito,sans-serif`; ctx.textAlign='center';
     ctx.fillText(p.day, x, H-pad.b+14);
