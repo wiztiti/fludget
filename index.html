@@ -384,7 +384,13 @@ canvas{width:100%;border-radius:8px;}
     <button class="graph-toggle-btn disabled" id="btnGraphYear" title="Bientôt disponible">📆 Annuel</button>
   </div>
   <div class="graph-card">
-    <h3 id="graphTitle">Solde courant — <span id="graphMonthLabel"></span></h3>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <h3 id="graphTitle">Solde courant — <span id="graphMonthLabel"></span></h3>
+      <div style="display:flex;gap:4px">
+        <button id="btnCurve" onclick="switchGraphType('curve')" class="graph-toggle-btn active" style="flex:none;padding:4px 10px;font-size:.7rem">〜 Courbe</button>
+        <button id="btnBars" onclick="switchGraphType('bars')" class="graph-toggle-btn" style="flex:none;padding:4px 10px;font-size:.7rem">▌Barres</button>
+      </div>
+    </div>
     <div class="graph-sub" id="graphSub">Évolution du solde au fil des mouvements cochés</div>
     <canvas id="graphCanvas" height="260"></canvas>
   </div>
@@ -1325,11 +1331,19 @@ function switchTab(tab){
 
 // ══ Graph ══
 let graphView='month';
-let GY, GM; // graph year/month, independent from budget nav
+let graphViewType='curve'; // 'curve' or 'bars'
+let GY, GM;
 
 function switchGraphView(v){
   if(v==='year') return; // disabled
   graphView=v;
+  renderGraph();
+}
+
+function switchGraphType(t){
+  graphViewType=t;
+  document.getElementById('btnCurve').classList.toggle('active',t==='curve');
+  document.getElementById('btnBars').classList.toggle('active',t==='bars');
   renderGraph();
 }
 
@@ -1350,46 +1364,38 @@ function renderMonthGraph(){
   const d=getMD(GY,GM);
   const moves=[];
 
-  // Nombre de jours dans le mois précédent (pour offset)
   const prevMonth=GM===0?11:GM-1;
   const prevYear=GM===0?GY-1:GY;
   const daysInPrevMonth=new Date(prevYear,prevMonth+1,0).getDate();
-  const daysInThisMonth=new Date(GY,GM+1,0).getDate();
 
-  // Convertit un mouvement en position chronologique absolue
-  // Les mouvements du mois précédent ont un offset négatif
-  function toPos(day, month){
+  function toPos(day,month){
     if(month==null) month=GM;
     if(month===GM) return day;
-    if(month===prevMonth) return day - daysInPrevMonth; // valeur négative = avant le 1er
-    return day; // fallback
+    if(month===prevMonth) return day-daysInPrevMonth;
+    return day;
   }
 
   d.revenus.filter(r=>r.checked).forEach(r=>{
     const day=r.checkedDate||r.jour||1;
     const month=r.checkedMonth!=null?r.checkedMonth:GM;
     const pos=toPos(day,month);
-    const dateLabel=`${day} ${ML[month]}`;
-    moves.push({pos,day,month,amount:r.montant,type:'rev',nom:r.nom,dateLabel});
+    moves.push({pos,day,month,amount:r.montant,type:'rev',nom:r.nom,dateLabel:`${day} ${ML[month]}`});
   });
   d.charges.filter(c=>c.checked).forEach(c=>{
     const day=c.checkedDate||c.jour||1;
-    const pos=toPos(day,GM);
-    moves.push({pos,day,month:GM,amount:-c.montant,type:'ch',nom:c.nom,dateLabel:`${day} ${ML[GM]}`});
+    moves.push({pos:toPos(day,GM),day,month:GM,amount:-c.montant,type:'ch',nom:c.nom,dateLabel:`${day} ${ML[GM]}`});
   });
   d.ponctuelles.filter(p=>p.checked).forEach(p=>{
     const day=p.checkedDate||p.jour||1;
-    const pos=toPos(day,GM);
-    moves.push({pos,day,month:GM,amount:-p.montant,type:'ch',nom:p.nom,dateLabel:`${day} ${ML[GM]}`});
+    moves.push({pos:toPos(day,GM),day,month:GM,amount:-p.montant,type:'ch',nom:p.nom,dateLabel:`${day} ${ML[GM]}`});
   });
 
   if(!moves.length){
-    drawEmptyGraph();
+    drawEmptyGraph('En attente du premier revenu');
     document.getElementById('graphSub').textContent='Aucun mouvement coché ce mois';
     return;
   }
 
-  // Trier par position chronologique
   moves.sort((a,b)=>a.pos-b.pos);
 
   // Grouper les mouvements du même jour
@@ -1398,29 +1404,37 @@ function renderMonthGraph(){
     const last=grouped[grouped.length-1];
     if(last&&last.pos===m.pos){
       last.amount+=m.amount;
-      last.label+=' + '+m.nom;
-      // type mixte : si revenus et charges → 'mix', sinon garder
+      last.label=(last.label||last.nom)+' + '+m.nom;
       if(last.type!==m.type) last.type='mix';
     } else {
-      grouped.push({...m});
+      grouped.push({...m, label:m.nom});
     }
   });
 
-  // Construire les points — commence directement au 1er mouvement
+  // Construire axe X : 32 jours budgétaires à partir du 1er mouvement
+  const originPos=grouped[0].pos;
   let solde=0;
-  const points=[];
-  grouped.forEach(m=>{
+  const points=grouped.map(m=>{
     solde+=m.amount;
-    points.push({pos:m.pos,day:m.day,solde,label:m.label,dateLabel:m.dateLabel,type:m.type});
+    return {
+      budgetDay: m.pos - originPos + 1, // jour budgétaire 1-based
+      pos: m.pos,
+      day: m.day,
+      solde,
+      label: m.label,
+      type: m.type
+    };
   });
 
+  const totalSolde=solde;
   document.getElementById('graphSub').textContent=
-    `${moves.length} mouvement${moves.length>1?'s':''} · solde actuel : ${fmt(solde)}`;
+    `${grouped.length} opération${grouped.length>1?'s':''} · solde : ${fmt(totalSolde)}`;
 
-  drawGraph(points);
+  if(graphViewType==='bars') drawBars(points);
+  else drawCurve(points);
 }
 
-function drawGraph(points){
+function drawCurve(points){
   const canvas=document.getElementById('graphCanvas');
   const dpr=window.devicePixelRatio||1;
   const W=canvas.parentElement.clientWidth-32;
@@ -1430,107 +1444,131 @@ function drawGraph(points){
   const ctx=canvas.getContext('2d');
   ctx.scale(dpr,dpr);
 
-  const pad={t:20,r:16,b:36,l:56};
+  const pad={t:20,r:16,b:36,l:58};
   const gw=W-pad.l-pad.r, gh=H-pad.t-pad.b;
 
-  // Valeurs min/max
   const soldes=points.map(p=>p.solde);
-  let minS=Math.min(...soldes), maxS=Math.max(...soldes);
+  let minS=Math.min(...soldes,0), maxS=Math.max(...soldes);
   const range=maxS-minS||1;
-  minS-=range*0.1; maxS+=range*0.1;
+  minS-=range*0.08; maxS+=range*0.12;
 
-  const poses=points.map(p=>p.pos);
-  const minD=Math.min(...poses), maxD=Math.max(...poses);
-  const dRange=maxD-minD||1;
-
-  function xPos(d){ return pad.l+(d-minD)/dRange*gw; }
+  // Axe X : 32 jours budgétaires
+  const totalDays=32;
+  function xPos(bd){ return pad.l+(bd-1)/(totalDays-1)*gw; }
   function yPos(s){ return pad.t+(1-(s-minS)/(maxS-minS))*gh; }
 
-  // Grid lines
-  ctx.strokeStyle='rgba(150,200,230,0.2)';
-  ctx.lineWidth=1;
+  // Grid
+  ctx.strokeStyle='rgba(150,200,230,0.2)'; ctx.lineWidth=1;
   for(let i=0;i<=4;i++){
     const y=pad.t+i*(gh/4);
     ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+gw,y); ctx.stroke();
-    const val=maxS-(i/4)*(maxS-minS);
-    ctx.fillStyle='rgba(100,140,180,0.6)';
-    ctx.font=`600 ${10}px Nunito,sans-serif`;
-    ctx.textAlign='right';
-    ctx.fillText(fmtNoEur(val), pad.l-6, y+4);
+    ctx.fillStyle='rgba(100,140,180,0.55)';
+    ctx.font=`600 9px Nunito,sans-serif`; ctx.textAlign='right';
+    ctx.fillText(fmtNoEur(maxS-(i/4)*(maxS-minS)), pad.l-5, y+3);
   }
 
   // Zero line
   if(minS<0&&maxS>0){
     const y0=yPos(0);
-    ctx.strokeStyle='rgba(240,128,128,0.4)';
-    ctx.setLineDash([4,4]);
+    ctx.strokeStyle='rgba(240,128,128,0.4)'; ctx.setLineDash([4,4]);
     ctx.beginPath(); ctx.moveTo(pad.l,y0); ctx.lineTo(pad.l+gw,y0); ctx.stroke();
     ctx.setLineDash([]);
   }
 
-  // Smooth curve helper
-  function smoothCurve(pts){
-    ctx.moveTo(xPos(pts[0].pos), yPos(pts[0].solde));
-    for(let i=1;i<pts.length;i++){
-      const x0=xPos(pts[i-1].pos), y0=yPos(pts[i-1].solde);
-      const x1=xPos(pts[i].pos),   y1=yPos(pts[i].solde);
-      const cpx=(x0+x1)/2;
-      ctx.bezierCurveTo(cpx,y0,cpx,y1,x1,y1);
-    }
-  }
-
-  // Fill under curve
-  const baseY=yPos(Math.max(0,minS));
+  // Fill
+  const baseY=yPos(0);
   ctx.beginPath();
-  ctx.moveTo(xPos(points[0].pos), baseY);
-  ctx.lineTo(xPos(points[0].pos), yPos(points[0].solde));
+  ctx.moveTo(xPos(points[0].budgetDay), baseY);
+  ctx.lineTo(xPos(points[0].budgetDay), yPos(points[0].solde));
   for(let i=1;i<points.length;i++){
-    const x0=xPos(points[i-1].pos), y0=yPos(points[i-1].solde);
-    const x1=xPos(points[i].pos),   y1=yPos(points[i].solde);
+    const x0=xPos(points[i-1].budgetDay), y0=yPos(points[i-1].solde);
+    const x1=xPos(points[i].budgetDay),   y1=yPos(points[i].solde);
     const cpx=(x0+x1)/2;
     ctx.bezierCurveTo(cpx,y0,cpx,y1,x1,y1);
   }
-  ctx.lineTo(xPos(points[points.length-1].pos), baseY);
+  ctx.lineTo(xPos(points[points.length-1].budgetDay), baseY);
   ctx.closePath();
   const grad=ctx.createLinearGradient(0,pad.t,0,pad.t+gh);
-  grad.addColorStop(0,'rgba(82,183,136,0.25)');
+  grad.addColorStop(0,'rgba(82,183,136,0.28)');
   grad.addColorStop(1,'rgba(82,183,136,0.03)');
-  ctx.fillStyle=grad;
-  ctx.fill();
+  ctx.fillStyle=grad; ctx.fill();
 
-  // Smooth stroke
+  // Stroke
   ctx.beginPath();
-  ctx.moveTo(xPos(points[0].pos), yPos(points[0].solde));
+  ctx.moveTo(xPos(points[0].budgetDay), yPos(points[0].solde));
   for(let i=1;i<points.length;i++){
-    const x0=xPos(points[i-1].pos), y0=yPos(points[i-1].solde);
-    const x1=xPos(points[i].pos),   y1=yPos(points[i].solde);
+    const x0=xPos(points[i-1].budgetDay), y0=yPos(points[i-1].solde);
+    const x1=xPos(points[i].budgetDay),   y1=yPos(points[i].solde);
     const cpx=(x0+x1)/2;
     ctx.bezierCurveTo(cpx,y0,cpx,y1,x1,y1);
   }
-  ctx.strokeStyle='rgba(82,183,136,0.9)';
-  ctx.lineWidth=2.5;
-  ctx.lineJoin='round';
-  ctx.stroke();
+  ctx.strokeStyle='rgba(82,183,136,0.9)'; ctx.lineWidth=2.5; ctx.lineJoin='round'; ctx.stroke();
 
-  // Points + labels
-  points.slice(1).forEach(p=>{
-    const x=xPos(p.pos), y=yPos(p.solde);
-    // Dot
-    ctx.beginPath();
-    ctx.arc(x,y,5,0,Math.PI*2);
-    ctx.fillStyle=p.type==='rev'?'rgba(82,183,136,1)':'rgba(244,162,97,1)';
-    ctx.fill();
-    ctx.strokeStyle='white'; ctx.lineWidth=1.5; ctx.stroke();
-
-    // Day number only on X axis
+  // Points + day labels
+  points.forEach(p=>{
+    const x=xPos(p.budgetDay), y=yPos(p.solde);
+    ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2);
+    ctx.fillStyle=p.type==='rev'?'rgba(82,183,136,1)':p.type==='mix'?'rgba(116,185,231,1)':'rgba(244,162,97,1)';
+    ctx.fill(); ctx.strokeStyle='white'; ctx.lineWidth=1.5; ctx.stroke();
     ctx.fillStyle='rgba(100,140,180,0.7)';
-    ctx.font=`600 9px Nunito,sans-serif`;
-    ctx.textAlign='center';
-    ctx.fillText(p.day||Math.round(p.pos), x, H-pad.b+14);
+    ctx.font=`600 9px Nunito,sans-serif`; ctx.textAlign='center';
+    ctx.fillText(p.day, x, H-pad.b+14);
   });
 }
 
-function drawEmptyGraph(){
+function drawBars(points){
+  const canvas=document.getElementById('graphCanvas');
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.parentElement.clientWidth-32;
+  const H=260;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+
+  const pad={t:20,r:16,b:36,l:58};
+  const gw=W-pad.l-pad.r, gh=H-pad.t-pad.b;
+
+  const amounts=points.map(p=>Math.abs(p.solde-( points[points.indexOf(p)-1]?.solde||0)));
+  const maxA=Math.max(...points.map(p=>Math.abs(p.solde-(points[points.indexOf(p)-1]?.solde||0))),1);
+
+  const totalDays=32;
+  const barW=Math.max(4, gw/totalDays*0.6);
+  function xPos(bd){ return pad.l+(bd-1)/(totalDays-1)*gw; }
+
+  // Grid
+  ctx.strokeStyle='rgba(150,200,230,0.2)'; ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=pad.t+i*(gh/4);
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+gw,y); ctx.stroke();
+    const val=maxA*(1-i/4);
+    ctx.fillStyle='rgba(100,140,180,0.55)';
+    ctx.font=`600 9px Nunito,sans-serif`; ctx.textAlign='right';
+    ctx.fillText(fmtNoEur(val), pad.l-5, y+3);
+  }
+
+  // Bars
+  points.forEach((p,i)=>{
+    const prev=i>0?points[i-1].solde:0;
+    const delta=p.solde-prev;
+    const barH=Math.abs(delta)/maxA*gh;
+    const x=xPos(p.budgetDay);
+    const y=delta>=0 ? pad.t+gh-barH : pad.t+gh;
+    const isRev=delta>0;
+    const grad=ctx.createLinearGradient(0,y,0,y+barH);
+    grad.addColorStop(0, isRev?'rgba(82,183,136,0.9)':'rgba(244,162,97,0.9)');
+    grad.addColorStop(1, isRev?'rgba(82,183,136,0.4)':'rgba(244,162,97,0.4)');
+    ctx.fillStyle=grad;
+    ctx.beginPath();
+    ctx.roundRect(x-barW/2, y, barW, barH, 3);
+    ctx.fill();
+    ctx.fillStyle='rgba(100,140,180,0.7)';
+    ctx.font=`600 9px Nunito,sans-serif`; ctx.textAlign='center';
+    ctx.fillText(p.day, x, H-pad.b+14);
+  });
+}
+
+function drawEmptyGraph(msg){
   const canvas=document.getElementById('graphCanvas');
   const dpr=window.devicePixelRatio||1;
   const W=canvas.parentElement.clientWidth-32;
@@ -1545,7 +1583,7 @@ function drawEmptyGraph(){
   ctx.fillStyle='rgba(100,140,180,0.4)';
   ctx.font=`700 13px Nunito,sans-serif`;
   ctx.textAlign='center';
-  ctx.fillText('Aucun mouvement coché ce mois', W/2, H/2);
+  ctx.fillText(msg||'Aucun mouvement coché ce mois', W/2, H/2);
 }
 
 let notifOpen=false;
